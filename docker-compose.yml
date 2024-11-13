@@ -1,0 +1,55 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app/backend
+    ports:
+      - "5000:5000"
+    environment:
+      - CONFIG_VAR=value
+      - FLASK_ENV=development
+      - REDIS_HOST=redis
+      - REDIS-PORT=6379
+    networks:
+      - app-network
+    depends_on:
+      - redis
+
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./src:/app/src
+    ports:
+      - "3000:80"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    networks:
+      - app-network
+  
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+  
+  redisinsight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    networks:
+      - app-network
+
+volumes:
+  redis_data:
+
+networks:
+  app-network:
