@@ -85,7 +85,7 @@ def barcodeOutput(s: str):
         items_dic[items_list[count]] = int(items_list[count + 1])
         count += 2
     for key, val in items_dic.items():
-        vial = redis_client.hget("item_barcode_to_size", key)
+        vial = redis_client.hget("item_barcode_info", key)
         size_count[ref[vial]] += val
         if size_count[ref[vial]] > 9:
             double_digit = True

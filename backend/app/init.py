@@ -17,12 +17,13 @@ def initialize_data(overwrite=False):
     redis_client.hset("barcode_to_items", "0005000003266", json.dumps(["item1", "1", "item2", "4", "item3", "2", "item4", "2", "item5", "2", "item6", "2"]))
 
     # Item Barcode -> Item size
-    redis_client.hset("item_barcode_to_size", "item1", "nf")
-    redis_client.hset("item_barcode_to_size", "item2", "nfp")
-    redis_client.hset("item_barcode_to_size", "item3", "wf")
-    redis_client.hset("item_barcode_to_size", "item4", "wfp")
-    redis_client.hset("item_barcode_to_size", "item5", "bt")
-    redis_client.hset("item_barcode_to_size", "item6", "btp")
+    # redis_client.hset("item_barcode_info", barcode number, json.dumps({"itemName": "", "itemSize": "",}))
+    redis_client.hset("item_barcode_info", "00000001", json.dumps({"itemName": "first item", "itemSize": "nvp"}))
+    redis_client.hset("item_barcode_info", "item2", "nfp")
+    redis_client.hset("item_barcode_info", "item3", "wf")
+    redis_client.hset("item_barcode_info", "item4", "wfp")
+    redis_client.hset("item_barcode_info", "item5", "bt")
+    redis_client.hset("item_barcode_info", "item6", "btp")
 
     # UNIQ Collections of Sizes -> UNIQ Collections of Boxes
     # key=x010203040506 OR

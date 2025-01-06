@@ -80,6 +80,32 @@ def decode_word():
     return jsonify({"barcodes": [order_info]})
 
 
+@app.route('/api/get-item-info', methods=['POST'])
+def getItemInfo():
+    data = request.get_json()
+    itemData = redis_client.hget('item_barcode_info', data["barcode"])
+    if itemData:
+        itemData = json.loads(itemData)
+        itemName = itemData["itemName"]
+        itemSize = itemData["itemSize"]
+        return jsonify({"status": "success!",
+                        "itemName": itemName,
+                        "itemSize": itemSize})
+    else:
+        return jsonify({"status": "No item",
+                        })
+
+@app.route('/api/new-item-barcode', methods=['POST'])
+def newItemBarcode():
+    data = request.get_json()
+    item_name = data["itemName"]
+    item_size = data["itemSize"]
+    value_object = {"itemName": item_name, "itemSize": item_size}
+    redis_client.hset('item_barcode_info', data["barcode"], json.dumps(value_object))
+    return jsonify({
+        "status": "success!",
+    })
+
 @app.route('/api/add-configuration', methods=['POST'])
 def addConfig():
     data = request.get_json()
