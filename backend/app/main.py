@@ -102,6 +102,7 @@ def newItemBarcode():
     item_size = data["itemSize"]
     value_object = {"itemName": item_name, "itemSize": item_size}
     redis_client.hset('item_barcode_info', data["barcode"], json.dumps(value_object))
+    print(data['items'])
     return jsonify({
         "status": "success!",
     })
