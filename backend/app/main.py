@@ -63,6 +63,7 @@ def decode_word():
             "size_count": input_string,
             "boxes": final_boxes
         }
+    #Else do what decode barcode does
     else:
         final_size_string, final_items_ordered = barcodeOutput(input_string)
         if len(final_size_string) < 8:
@@ -102,7 +103,6 @@ def newItemBarcode():
     item_size = data["itemSize"]
     value_object = {"itemName": item_name, "itemSize": item_size}
     redis_client.hset('item_barcode_info', data["barcode"], json.dumps(value_object))
-    print(data['items'])
     return jsonify({
         "status": "success!",
     })
