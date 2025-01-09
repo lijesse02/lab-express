@@ -15,7 +15,7 @@ const CurrentPackingOrder = () => {
 
     const validSizes = ["nv", "nvp", "wv", "wvp", "bt", "btp"]
   
-    const addOrUpdateItem = (itemName, quantity = 1) => {
+    const addOrUpdateItem = (itemName, itemSize, quantity = 1) => {
         setItemList((prevList) => {
             const existingItem = prevList.find((item) => item.item_name === itemName)
 
@@ -30,6 +30,7 @@ const CurrentPackingOrder = () => {
             const newItem = {
                 id: idCounter,
                 item_name: itemName,
+                item_size: itemSize,
                 quantity
             }
             setIdCounter((prevId) => prevId + 1)
@@ -39,7 +40,6 @@ const CurrentPackingOrder = () => {
 
     const handleSubmitNewItem = async (e) => {
         try{
-            console.log(barcode)
             const response = await fetch("http://localhost:5000/api/new-item-barcode", {
                 method: "POST",
                 headers: { "Content-Type": "application/json"},
@@ -52,7 +52,6 @@ const CurrentPackingOrder = () => {
 
             if (response.ok){
                 const data = await response.json()
-                console.log(data.status)
                 setShowPopup(false)
                 setNewItemName("")
                 setNewItemSize("")
@@ -79,15 +78,13 @@ const CurrentPackingOrder = () => {
 
                 if (response.ok) {
                     const data = await response.json()
-                    console.log(data)
+                    console.log(data.sizeList)
                     if (data.status !== "success!"){
-                        console.log("Not an Item", value)
                         setShowPopup(!showPopup)
-                        console.log(value)
                     }else{
-                        addOrUpdateItem(data.itemName, 1)
-                        console.log(itemList, value)}
+                        addOrUpdateItem(data.itemName, data.itemSize, 1)
                         setBarcode("")
+                    }
                     
                 }else {
                     console.error("API Error:", response.statusText)
@@ -174,20 +171,20 @@ const CurrentPackingOrder = () => {
                         <input 
                             id='barcode-input'
                             value={barcode}
-                            className="w-full bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded-md px-3 py-2 transition duration-300 ease focus:border-blue-500 hover:border-blue-300" 
+                            className="w-full bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border rounded-md px-3 py-2 transition duration-300 ease focus:border-blue-500 hover:border-blue-300" 
                             placeholder="Type here..." 
                             type="text"
                             onChange={handleInputChange}/>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-md shadow flex items-center justify-center">
+                    <div className="p-4 bg-gray-50 rounded-md shadow items-center justify-center">
                         {/* Box Image */}
                         <img
                             src={boxImage}
                             alt="Cardboard Box"
-                            className="w-48 h-48 object-cover mb-2"
+                            className="object-cover mb-2"
                         />
                         {/* Variable Text */}
-                        <p className="text-gray-800 text-lg font-semibold">{boxType}</p>
+                        <p className="text-center text-lg font-semibold">{boxType}</p>
                     </div>
                 </div>
                 {/* Right column */}
@@ -196,13 +193,13 @@ const CurrentPackingOrder = () => {
                     <table class="w-full text-left table-auto min-w-max">
                         <thead>
                         <tr>
-                            <th class="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
-                            <p class="block font-sans text-sm antialiased font-normal leading-none text-blue-gray-900 opacity-70">
+                            <th class="p-4 border-b border-gray-100 bg-gray-100">
+                            <p class="block font-sans text-sm antialiased font-normal leading-none  opacity-70">
                                 Item Name
                             </p>
                             </th>
-                            <th class="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
-                            <p class="block font-sans text-sm antialiased font-normal leading-none text-blue-gray-900 opacity-70">
+                            <th class="p-4 border-b border-gray-100 bg-gray-100">
+                            <p class="block font-sans text-sm antialiased font-normal leading-none opacity-70">
                                 Quantity
                             </p>
                             </th>
@@ -213,10 +210,10 @@ const CurrentPackingOrder = () => {
                                 <tr
                                     key={item.id}
                                     className={`${
-                                                item.id % 2 === 0 ? "bg-blue-gray-50/50" : ""}`}
+                                                item.id % 2 === 0 ? "bg-gray-50" : ""}`}
                                 >
-                                    <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900">{item.item_name}</p></td>
-                                    <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900">{item.quantity}</p></td>
+                                    <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.item_name}</p></td>
+                                    <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.quantity}</p></td>
                                 </tr>
                             ))}
                         </tbody>

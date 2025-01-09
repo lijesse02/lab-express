@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from pyzbar.pyzbar import decode
 from PIL import Image
 from helper import barcodeOutput, directOutput, toTwelve
+from logic import logic
 import io
 from flask_cors import CORS
 from init import initialize_data, redis_client
@@ -51,17 +52,26 @@ def decode_barcode():
 
 @app.route('/api/decode-word', methods=['POST'])
 def decode_word():
+    #receive data
     data = request.get_json()
+
+    #check for input and for "x"
     if not data or 'input_string' not in data:
         return jsonify({'error': 'input_string is required'}), 400
     input_string = data['input_string']
     if input_string[0] == 'x':
+
+        #change to 12 length string
         input_string = toTwelve(input_string)
-        final_boxes = directOutput(input_string)
+
+        #use logic/lookup to find box
+        final_box = logic(input_string)
+
+        #send back response
         order_info = {
-            "type": "Entered Size",
+            "type": "Input = x12",
             "size_count": input_string,
-            "boxes": final_boxes
+            "boxes": final_box
         }
     #Else do what decode barcode does
     else:
@@ -83,15 +93,34 @@ def decode_word():
 
 @app.route('/api/get-item-info', methods=['POST'])
 def getItemInfo():
+    # grab data
     data = request.get_json()
     itemData = redis_client.hget('item_barcode_info', data["barcode"])
     if itemData:
+        #Grab info from database
         itemData = json.loads(itemData)
         itemName = itemData["itemName"]
         itemSize = itemData["itemSize"]
-        return jsonify({"status": "success!",
+
+        #Make list of item sizes
+        sizeList = {
+            "nv": 0,
+            "nvp": 0,
+            "wv": 0,
+            "wvp": 0,
+            "bt": 0,
+            "btp": 0,
+        }
+        for item in data["items"]:
+            sizeList[item.get("item_size")] += item.get("quantity")
+        sizeList[itemData["itemSize"]] += 1
+
+        return jsonify({
+                        "status": "success!",
                         "itemName": itemName,
-                        "itemSize": itemSize})
+                        "itemSize": itemSize,
+                        "sizeList": sizeList
+                        })
     else:
         return jsonify({"status": "No item",
                         })
@@ -109,10 +138,15 @@ def newItemBarcode():
 
 @app.route('/api/add-configuration', methods=['POST'])
 def addConfig():
+    #receive data
     data = request.get_json()
     size_count = data["size_count"]
     boxes = data["boxes"]
+
+    #parse and modify key if needed to 12 length
     size_count = toTwelve(size_count)
+
+    #input into database
     redis_client.hset("uniq_to_uniq", size_count, json.dumps(boxes))
     return jsonify({"status": "Success!"})
 

@@ -74,7 +74,7 @@ const AddConfig = () => {
                             <div>
                                 <h3 className="text-sm font-medium text-gray-700 mb-1">Boxes</h3>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {Array.from({ length: 1 }).map((_, index) => (
+                                    {Array.from({ length: 3 }).map((_, index) => (
                                         <input
                                             key={index}
                                             type="text"
