@@ -2,10 +2,9 @@ import redis
 import os
 import json
 
-redis_host = "18.116.41.16"
-redis_port = 6379
-redis_password = "JinhongHuimin01#redis"
-redis_client = redis.Redis(host=redis_host, port=redis_port, decode_responses=True, password=redis_password)
+redis_host = os.getenv('REDIS_HOST', 'redis')
+redis_port = os.getenv('REDIS_PORT', 6379)
+redis_client = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
 
 def initialize_data(overwrite=False):
     print(overwrite)
