@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from pyzbar.pyzbar import decode
 from PIL import Image
 from helper import barcodeOutput, directOutput, toTwelve
-from logic import logic
+from logic import logic, logicDict
 import io
 from flask_cors import CORS
 from init import initialize_data, redis_client
@@ -115,11 +115,15 @@ def getItemInfo():
             sizeList[item.get("item_size")] += item.get("quantity")
         sizeList[itemData["itemSize"]] += 1
 
+        #return the box(es) to use
+        boxes = logicDict(sizeList)
+
         return jsonify({
                         "status": "success!",
                         "itemName": itemName,
                         "itemSize": itemSize,
-                        "sizeList": sizeList
+                        "sizeList": sizeList,
+                        "boxes": boxes
                         })
     else:
         return jsonify({"status": "No item",

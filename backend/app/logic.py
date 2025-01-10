@@ -6,9 +6,31 @@ from enum import Enum
 def logic(input_string: str):
     #see if specific string is already in database
     box = redis_client.hget("uniq_to_uniq", input_string)
-    box = json.loads(box)
     if box:
+        box = json.loads(box)
         return box
     else:
         #use heuristics to determine correct box
         return ["0"]
+    
+def logicDict(input_dic: dict):
+    s = "x"
+    if input_dic["nv"] < 10:
+        s += "0"
+    s += str(input_dic["nv"])
+    if input_dic["nvp"] < 10:
+        s += "0"
+    s += str(input_dic["nvp"])
+    if input_dic["wv"] < 10:
+        s += "0"
+    s += str(input_dic["wv"])
+    if input_dic["wvp"] < 10:
+        s += "0"
+    s += str(input_dic["wvp"])
+    if input_dic["bt"] < 10:
+        s += "0"
+    s += str(input_dic["bt"])
+    if input_dic["btp"] < 10:
+        s += "0"
+    s += str(input_dic["btp"])
+    return logic(s)

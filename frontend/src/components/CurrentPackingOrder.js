@@ -83,6 +83,7 @@ const CurrentPackingOrder = () => {
                         setShowPopup(!showPopup)
                     }else{
                         addOrUpdateItem(data.itemName, data.itemSize, 1)
+                        setBoxType(data.boxes)
                         setBarcode("")
                     }
                     
