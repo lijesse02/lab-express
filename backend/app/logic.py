@@ -13,24 +13,24 @@ def logic(input_string: str):
         #use heuristics to determine correct box
         return ["0"]
     
-def logic(input_dic: dict):
+def logicDict(input_dic: dict):
     s = "x"
     if input_dic["nv"] < 10:
         s += "0"
-    s += input_dic["nv"]
+    s += str(input_dic["nv"])
     if input_dic["nvp"] < 10:
         s += "0"
-    s += input_dic["nvp"]
+    s += str(input_dic["nvp"])
     if input_dic["wv"] < 10:
         s += "0"
-    s += input_dic["wv"]
+    s += str(input_dic["wv"])
     if input_dic["wvp"] < 10:
         s += "0"
-    s += input_dic["wvp"]
+    s += str(input_dic["wvp"])
     if input_dic["bt"] < 10:
         s += "0"
-    s += input_dic["bt"]
+    s += str(input_dic["bt"])
     if input_dic["btp"] < 10:
         s += "0"
-    s += input_dic["btp"]
+    s += str(input_dic["btp"])
     return logic(s)
