@@ -31,7 +31,7 @@ const NewOrderCard = ({ onSubmitOrder }) => {
         formData.append('image', file);
 
         try{
-            const response = await fetch('http://localhost:5000/api/decode', {
+            const response = await fetch('http://172.31.24.195:5000/api/decode', {
                 method: 'POST',
                 body: formData
             });
@@ -52,7 +52,7 @@ const NewOrderCard = ({ onSubmitOrder }) => {
         const data = { input_string: numberInput };
 
         try{
-            const response = await fetch('http://localhost:5000/api/decode-word', {
+            const response = await fetch('http://172.31.24.195:5000/api/decode-word', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',  // Ensure Content-Type is set to JSON

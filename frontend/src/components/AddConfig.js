@@ -25,7 +25,7 @@ const AddConfig = () => {
         };
 
         try {
-            const response = await fetch('http://localhost:5000/api/add-configuration', {
+            const response = await fetch('http://172.31.24.195:5000/api/add-configuration', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(configData),
