@@ -115,11 +115,15 @@ def getItemInfo():
             sizeList[item.get("item_size")] += item.get("quantity")
         sizeList[itemData["itemSize"]] += 1
 
+        #return the box(es) to use
+        boxes = logic(sizeList)
+
         return jsonify({
                         "status": "success!",
                         "itemName": itemName,
                         "itemSize": itemSize,
-                        "sizeList": sizeList
+                        "sizeList": sizeList,
+                        "boxes": boxes
                         })
     else:
         return jsonify({"status": "No item",
