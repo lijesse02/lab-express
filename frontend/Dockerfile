@@ -2,6 +2,7 @@
 FROM node:21 as build
 
 # Set working directory
+RUN mkdir -p /app
 WORKDIR /app
 
 # Copy package and install dependencies
