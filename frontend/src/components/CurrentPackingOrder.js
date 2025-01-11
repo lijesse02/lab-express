@@ -129,7 +129,7 @@ const CurrentPackingOrder = () => {
 
                         {/* Input for Quantity */}
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700">Quantity</label>
+                            <label className="block text-sm font-medium text-gray-700">Size</label>
                             <input
                                 type="text"
                                 value={newItemSize}
