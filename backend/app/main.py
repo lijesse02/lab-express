@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from pyzbar.pyzbar import decode
 from PIL import Image
-from helper import barcodeOutput, directOutput, toTwelve
+from helper import barcodeOutput, toTwelve
 from logic import logic, logicDict
 import io
 from flask_cors import CORS
@@ -38,7 +38,7 @@ def decode_barcode():
         final_size_string, final_items_ordered = barcodeOutput(barcode.data.decode("utf-8"))
         if len(final_size_string) < 8:
             final_size_string = toTwelve(final_size_string)
-        final_boxes = directOutput(final_size_string)
+        final_boxes = logic(final_size_string)
         barcode_info = {
             "data": barcode.data.decode("utf-8"),
             "order": final_items_ordered,
@@ -78,7 +78,7 @@ def decode_word():
         final_size_string, final_items_ordered = barcodeOutput(input_string)
         if len(final_size_string) < 8:
             final_size_string = toTwelve(final_size_string)
-        final_boxes = directOutput(final_size_string)
+        final_boxes = logic(final_size_string)
         order_info ={
             "data": input_string,
             "order": final_items_ordered,
@@ -115,7 +115,7 @@ def getItemInfo():
             sizeList[item.get("item_size")] += item.get("quantity")
         sizeList[itemData["itemSize"]] += 1
 
-        #return the box(es) to use
+        #return the box(es) to use as a string
         boxes = logicDict(sizeList)
 
         return jsonify({
