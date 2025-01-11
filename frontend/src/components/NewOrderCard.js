@@ -52,7 +52,7 @@ const NewOrderCard = ({ onSubmitOrder }) => {
         const data = { input_string: numberInput };
 
         try{
-            const response = await ('http://18.116.41.16:5000/api/decode-word', {
+            const response = await fetch('https://18.116.41.16:5000/api/decode-word', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',  // Ensure Content-Type is set to JSON

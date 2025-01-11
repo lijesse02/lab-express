@@ -157,5 +157,5 @@ def addConfig():
 
 if __name__ == "__main__":
     initialize_data(overwrite=False)
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, ssl_context=('cert.pem', 'key.pem'))
     
