@@ -1,0 +1,14 @@
+{
+  "files": {
+    "main.css": "/static/css/main.ba59b53a.css",
+    "main.js": "/static/js/main.bcf5270f.js",
+    "static/media/openBox.png": "/static/media/openBox.91cd1cfe204fb0ee1d9c.png",
+    "index.html": "/index.html",
+    "main.ba59b53a.css.map": "/static/css/main.ba59b53a.css.map",
+    "main.bcf5270f.js.map": "/static/js/main.bcf5270f.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ba59b53a.css",
+    "static/js/main.bcf5270f.js"
+  ]
+}
