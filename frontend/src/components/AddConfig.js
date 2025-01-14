@@ -25,7 +25,7 @@ const AddConfig = () => {
         };
 
         try {
-            const response = await fetch('https://jesse-li.dev/backend/api/add-configuration', {
+            const response = await fetch('https://jesse-li.dev/backend/api/add-configuration/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(configData),
