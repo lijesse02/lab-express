@@ -20,8 +20,15 @@ def hello():
 
 
 
-@app.route('/api/decode', methods=['POST'])
+@app.route('/api/decode', methods=['POST', 'OPTIONS'])
 def decode_barcode():
+    if request.method == 'OPTIONS':
+        # Respond to the preflight request
+        response = Flask.make_response('')
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return response
     if 'image' not in request.files:
         return jsonify({"error": "No Image Provided"}), 400
     
@@ -50,8 +57,15 @@ def decode_barcode():
 
     return jsonify({"barcodes": barcode_data})
 
-@app.route('/api/decode-word', methods=['POST'])
+@app.route('/api/decode-word', methods=['POST', 'OPTIONS'])
 def decode_word():
+    if request.method == 'OPTIONS':
+        # Respond to the preflight request
+        response = Flask.make_response('')
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return response
     #receive data
     data = request.get_json()
 
@@ -91,8 +105,15 @@ def decode_word():
     return jsonify({"barcodes": [order_info]})
 
 
-@app.route('/api/get-item-info', methods=['POST'])
+@app.route('/api/get-item-info', methods=['POST', 'OPTIONS'])
 def getItemInfo():
+    if request.method == 'OPTIONS':
+        # Respond to the preflight request
+        response = Flask.make_response('')
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return response
     # grab data
     data = request.get_json()
     itemData = redis_client.hget('item_barcode_info', data["barcode"])
@@ -129,8 +150,15 @@ def getItemInfo():
         return jsonify({"status": "No item",
                         })
 
-@app.route('/api/new-item-barcode', methods=['POST'])
+@app.route('/api/new-item-barcode', methods=['POST', 'OPTIONS'])
 def newItemBarcode():
+    if request.method == 'OPTIONS':
+        # Respond to the preflight request
+        response = Flask.make_response('')
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return response
     data = request.get_json()
     item_name = data["itemName"]
     item_size = data["itemSize"]
@@ -140,8 +168,15 @@ def newItemBarcode():
         "status": "success!",
     })
 
-@app.route('/api/add-configuration', methods=['POST'])
+@app.route('/api/add-configuration', methods=['POST', 'OPTIONS'])
 def addConfig():
+    if request.method == 'OPTIONS':
+        # Respond to the preflight request
+        response = Flask.make_response('')
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return response
     #receive data
     data = request.get_json()
     size_count = data["size_count"]
