@@ -40,7 +40,7 @@ const CurrentPackingOrder = () => {
 
     const handleSubmitNewItem = async (e) => {
         try{
-            const response = await fetch("https://18.116.41.16:5000/api/new-item-barcode", {
+            const response = await fetch("https://jesse-li.dev/backend/api/new-item-barcode", {
                 method: "POST",
                 headers: { "Content-Type": "application/json"},
                 body: JSON.stringify({
@@ -68,7 +68,7 @@ const CurrentPackingOrder = () => {
         if (value.length === 8){
             
             try{
-                const response = await fetch('https://18.116.41.16:5000/api/get-item-info', {
+                const response = await fetch('https://jesse-li.dev/backend/api/get-item-info', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',  // Ensure Content-Type is set to JSON
