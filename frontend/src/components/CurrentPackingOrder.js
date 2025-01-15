@@ -38,6 +38,10 @@ const CurrentPackingOrder = () => {
         })
     }
 
+    const handleClear = () => {
+        setItemList([])
+    }
+
     const handleSubmitNewItem = async (e) => {
         try{
             const response = await fetch("https://www.jesse-li.dev/backend/api/new-item-barcode", {
@@ -168,6 +172,7 @@ const CurrentPackingOrder = () => {
             <div className="flex space-x-4">
                 {/* Left column */}
                 <div className="w-1/4 p-4 bg-white rounded-md shadow-md flex flex-col space-y-4">
+                    {/* Barcode Input */}
                     <div className="p-4 bg-gray-50 rounded-md shadow">
                         <input 
                             id='barcode-input'
@@ -187,6 +192,13 @@ const CurrentPackingOrder = () => {
                         {/* Variable Text */}
                         <p className="text-center text-lg font-semibold">{boxType}</p>
                     </div>
+                    {/* Clear Button */}
+                    <button
+                        onClick={handleClear}
+                        className="px-4 py-2 bg-emerald-300 text-white rounded hover:bg-green-500"
+                    >
+                        Clear
+                    </button>
                 </div>
                 {/* Right column */}
                 <div className="flex-1 p-4 bg-white rounded-md shadow-md">
