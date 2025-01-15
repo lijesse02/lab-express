@@ -69,7 +69,7 @@ const CurrentPackingOrder = () => {
     const handleInputChange = async (e) => {
         const value = e.target.value
         setBarcode(value)
-        if (value.length === 8){
+        if (value.length === 6){
             
             try{
                 const response = await fetch('https://www.jesse-li.dev/backend/api/get-item-info', {
