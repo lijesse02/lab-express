@@ -8,6 +8,7 @@ from flask_cors import CORS
 from init import initialize_data, redis_client
 import os
 import json
+import pandas as pd
 
 
 app = Flask(__name__)
@@ -89,6 +90,45 @@ def decode_word():
     
 
     return jsonify({"barcodes": [order_info]})
+
+@app.route('/api/decode-excel', methods=['POST'])
+def decode_excel():
+    #receive data
+    if 'file' not in request.files:
+        return jsonify({"error": "No Image Provided"}), 400
+    
+    excel_file = request.files['file']
+
+    try:
+        df = pd.read_excel(excel_file)
+        current_order_number = ""
+        items_in_order = []
+        for row in df.itertuples(index=True):
+            if pd.isna(row.Num):
+                if items_in_order:
+                    redis_client.hset("barcode_to_items", current_order_number, json.dumps(items_in_order))
+                    current_order_number = ""
+                    items_in_order = []
+            else:
+                if current_order_number == "":
+                    current_order_number = row.Num[1:-1]
+                    items_in_order = [row.Item]
+                elif current_order_number != row.Num[1:-1]:
+                    redis_client.hset("barcode_to_items", current_order_number, json.dumps(items_in_order))
+                    current_order_number = row.Num[1:-1]
+                    items_in_order = [row.Item]
+                else:
+                    items_in_order.append(row.Item)
+        return jsonify({"status": "success! data imported"}), 200
+    except Exception as e:
+        error_type = type(e).__name__
+        error_message = str(e)
+        return jsonify({
+            "status": "failed",
+            "error_type": error_type,
+            "error_message": error_message
+        }), 500
+    return jsonify({"status": "success! data imported"})
 
 
 @app.route('/api/get-item-info', methods=['POST'])
