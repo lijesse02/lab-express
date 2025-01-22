@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import boxImage from '../assets/openBox.png'
+import ItemsInOrder from './ItemsInOrder'
 
 const CurrentPackingOrder = () => {
     //Displayed Info (item side)
@@ -7,6 +8,7 @@ const CurrentPackingOrder = () => {
     const [itemList, setItemList] = useState([])
     const [error, setError] = useState("none")
     const [idCounter, setIdCounter] = useState(1)
+    const [keyCounterIIO, setKeyCounterIIO] = useState(0)
 
     //Popup for Adding Item
     const [showPopup, setShowPopup] = useState(false)
@@ -48,6 +50,7 @@ const CurrentPackingOrder = () => {
 
     const handleClear = () => {
         setItemList([])
+        setKeyCounterIIO((prevKey) => prevKey + 1)
     }
 
     const handleSubmitNewItem = async (e) => {
@@ -211,8 +214,9 @@ const CurrentPackingOrder = () => {
 
             <div className="flex space-x-4">
                 {/* Left column */}
-                <div className="w-1/4 p-4 bg-white rounded-md shadow-md flex flex-col space-y-4">
+                <div className="w-1/6 p-4 bg-white rounded-md shadow-md flex flex-col space-y-4">
                     {/* Barcode Input */}
+                    <label className="block text-sm font-medium text-gray-700">Item Barcode</label>
                     <div className="p-4 bg-gray-50 rounded-md shadow">
                         <input 
                             id='barcode-input'
@@ -240,19 +244,19 @@ const CurrentPackingOrder = () => {
                         Clear
                     </button>
                 </div>
-                {/* Right column */}
+                {/* Middle column */}
                 <div className="flex-1 p-4 bg-white rounded-md shadow-md">
                     <div className="flex flex-col space-y-2">
-                    <table class="w-full text-left table-auto min-w-max">
+                    <table className="w-full text-left table-auto min-w-max">
                         <thead>
                         <tr>
-                            <th class="p-4 border-b border-gray-100 bg-gray-100">
-                            <p class="block font-sans text-sm antialiased font-normal leading-none  opacity-70">
+                            <th className="p-4 border-b border-gray-100 bg-gray-100">
+                            <p className="block font-sans text-sm antialiased font-normal leading-none  opacity-70">
                                 Item Name
                             </p>
                             </th>
-                            <th class="p-4 border-b border-gray-100 bg-gray-100">
-                            <p class="block font-sans text-sm antialiased font-normal leading-none opacity-70">
+                            <th className="p-4 border-b border-gray-100 bg-gray-100">
+                            <p className="block font-sans text-sm antialiased font-normal leading-none opacity-70">
                                 Quantity
                             </p>
                             </th>
@@ -272,6 +276,10 @@ const CurrentPackingOrder = () => {
                         </tbody>
                     </table>
                     </div>
+                </div>
+                {/* Right column */}
+                <div className="w-1/3">
+                    <ItemsInOrder key={keyCounterIIO} parentItemList={itemList}/>
                 </div>
             </div>
         </div>
