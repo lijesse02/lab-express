@@ -2,27 +2,34 @@ import React, { useState } from "react";
 import boxImage from '../assets/openBox.png'
 
 const CurrentPackingOrder = () => {
-    const [boxType, setBoxType] = useState('Small Box'); // Example variable text
-    const [barcode, setBarcode] = useState('')
+    //Displayed Info (item side)
+    const [boxType, setBoxType] = useState('Small Box');
     const [itemList, setItemList] = useState([])
+    const [error, setError] = useState("none")
     const [idCounter, setIdCounter] = useState(1)
+
+    //Popup for Adding Item
     const [showPopup, setShowPopup] = useState(false)
+    const [disabledButton, setDisabledButton] = useState(true)
+    
+    //Textbox and API variables
+    const [barcode, setBarcode] = useState('')
     const [newItemName, setNewItemName] = useState("")
     const [newItemSize, setNewItemSize] = useState("")
-    const [disabledButton, setDisabledButton] = useState(true)
-    const [error, setError] = useState("none")
-
+    const [newItemUM, setNewItemUM] = useState("U")
+    const [newItemQuantity, setNewItemQuantity] = useState(1)
+    
 
     const validSizes = ["nv", "nvp", "wv", "wvp", "bt", "btp"]
   
-    const addOrUpdateItem = (itemName, itemSize, quantity = 1) => {
+    const addOrUpdateItem = (itemName, itemSize, itemQuantity=1, itemUM) => {
         setItemList((prevList) => {
             const existingItem = prevList.find((item) => item.item_name === itemName)
 
             if (existingItem){
                 return prevList.map((item) => 
                     item.item_name === itemName 
-                    ? {...item, quantity:item.quantity + quantity}
+                    ? {...item, item_quantity:item.item_quantity + Number(itemQuantity)}
                     : item
                 )
             }
@@ -31,7 +38,8 @@ const CurrentPackingOrder = () => {
                 id: idCounter,
                 item_name: itemName,
                 item_size: itemSize,
-                quantity
+                item_quantity: Number(itemQuantity),
+                item_um: itemUM
             }
             setIdCounter((prevId) => prevId + 1)
             return [...prevList, newItem]
@@ -50,7 +58,9 @@ const CurrentPackingOrder = () => {
                 body: JSON.stringify({
                     barcode: barcode, 
                     itemName: newItemName,
-                    itemSize: newItemSize
+                    itemSize: newItemSize,
+                    itemUM: newItemUM,
+                    itemQuantity: newItemQuantity
                 })
             })
 
@@ -60,6 +70,8 @@ const CurrentPackingOrder = () => {
                 setNewItemName("")
                 setNewItemSize("")
                 setBarcode("")
+                setNewItemQuantity(1)
+                setNewItemUM("U")
             }
         }catch{
             console.error("bad new item barcode submission", 407)
@@ -83,10 +95,11 @@ const CurrentPackingOrder = () => {
                 if (response.ok) {
                     const data = await response.json()
                     console.log(data.sizeList)
+                    console.log(itemList)
                     if (data.status !== "success!"){
                         setShowPopup(!showPopup)
                     }else{
-                        addOrUpdateItem(data.itemName, data.itemSize, 1)
+                        addOrUpdateItem(data.itemName, data.itemSize, data.itemQuantity, data.itemUM)
                         setBoxType(data.boxes)
                         setBarcode("")
                     }
@@ -131,7 +144,34 @@ const CurrentPackingOrder = () => {
                             />
                         </div>
 
-                        {/* Input for Quantity */}
+                        {/* Input for U/M and Quantity */}
+                        <div className="mb-4">
+                            {/* U/M */}
+                            <label className="block text-sm font-medium text-gray-700">U/M</label>
+                            <input
+                                type="text"
+                                value={newItemUM}
+                                onChange={(e) => {
+                                    setNewItemUM(e.target.value)
+                                   }}
+                                placeholder="Default: U"
+                                className="mt-2 px-3 py-2 border border-gray-300 rounded-md w-full"
+                            />
+
+                            {/* Quantity */}
+                            <label className="block text-sm font-medium text-gray-700">Quantity</label>
+                            <input
+                                type="text"
+                                value={newItemQuantity}
+                                onChange={(e) => {
+                                    setNewItemQuantity(e.target.value)
+                                   }}
+                                placeholder="Default: 1"
+                                className="mt-2 px-3 py-2 border border-gray-300 rounded-md w-full"
+                            />
+                        </div>
+
+                        {/* Input for Size */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700">Size</label>
                             <input
@@ -226,7 +266,7 @@ const CurrentPackingOrder = () => {
                                                 item.id % 2 === 0 ? "bg-gray-50" : ""}`}
                                 >
                                     <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.item_name}</p></td>
-                                    <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.quantity}</p></td>
+                                    <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.item_quantity}</p></td>
                                 </tr>
                             ))}
                         </tbody>
