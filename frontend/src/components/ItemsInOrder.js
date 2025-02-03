@@ -14,6 +14,12 @@ const ItemsInOrder = ({ parentItemList }) => {
 
                 if(existingItem){
                     existingItem.remaining = existingItem.quantity - parentItem.item_quantity
+                }else{
+                    updatedList.push({
+                        product: parentItem.item_name,
+                        quantity: 0,
+                        remaining: 0 - Number(parentItem.item_quantity)
+                    })
                 }
             })
 
@@ -72,7 +78,7 @@ const ItemsInOrder = ({ parentItemList }) => {
             )}
             {!showBarcodeInput && (
                 <div className="p-4 bg-white rounded-md shadow-md flex flex-col">
-                    <table className="w-auto text-left table-auto min-w-max">
+                    <table className="w-auto text-left table-auto">
                         <thead>
                         <tr>
                             <th className="p-4 border-b border-gray-100 bg-gray-100">
@@ -80,12 +86,12 @@ const ItemsInOrder = ({ parentItemList }) => {
                                 Item Name
                             </p>
                             </th>
-                            <th className="w-1/5 p-4 border-b border-gray-100 bg-gray-100">
+                            <th className="w-1/10 p-4 border-b border-gray-100 bg-gray-100">
                             <p className="block font-sans text-sm antialiased font-normal leading-none opacity-70">
                                 Quantity
                             </p>
                             </th>
-                            <th className="w-1/5 p-4 border-b border-gray-100 bg-gray-100">
+                            <th className="w-1/10 p-4 border-b border-gray-100 bg-gray-100">
                             <p className="block font-sans text-sm antialiased font-normal leading-none opacity-70">
                                 Remaining
                             </p>
@@ -96,7 +102,13 @@ const ItemsInOrder = ({ parentItemList }) => {
                             {orderList.map((item) => (
                                 <tr
                                     key={item.product}
-                                    className={""}
+                                    className={`border border-gray-300 p-2 ${
+                                        item.remaining === 0
+                                          ? 'bg-green-400'
+                                          : item.remaining < 0
+                                          ? 'bg-red-400'
+                                          : ''
+                                      }`}
                                 >
                                     <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.product}</p></td>
                                     <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.quantity}</p></td>

@@ -1,12 +1,13 @@
 import React from "react";
 
 const SIZE_LABELS = {
-    0: "nf",
-    1: "nfp",
-    2: "wf",
-    3: "wfp",
+    0: "nv",
+    1: "pnv",
+    2: "wv",
+    3: "pwv",
     4: "bt",
-    5: "btp"
+    5: "pbt",
+    6: "bulk"
 };
 
 const OrderResponseCard = ({ order }) => {
@@ -16,8 +17,8 @@ const OrderResponseCard = ({ order }) => {
 
     // Get Size Count
     const rawSizeCount = order?.barcodes?.[0]?.size_count.slice(1);
-    const sizeCount = rawSizeCount && rawSizeCount.length === 12
-        ? Array.from({ length: 6 }, (_, i) => rawSizeCount.slice(i * 2, i * 2 + 2))
+    const sizeCount = rawSizeCount && rawSizeCount.length === 14
+        ? Array.from({ length: 7 }, (_, i) => rawSizeCount.slice(i * 2, i * 2 + 2))
         : null;
 
     // Get boxes array
@@ -47,7 +48,7 @@ const OrderResponseCard = ({ order }) => {
             </div>
 
             {/* Size Count Card */}
-            {sizeCount && sizeCount.length === 6 && (
+            {sizeCount && sizeCount.length === 7 && (
                 <div className="p-4 bg-blue-100 rounded-lg shadow-sm border border-blue-300">
                     <h3 className="text-lg font-bold text-gray-700 mb-2">Size Count</h3>
                     <div className="flex justify-between">

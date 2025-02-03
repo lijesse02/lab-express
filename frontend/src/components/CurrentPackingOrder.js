@@ -22,7 +22,7 @@ const CurrentPackingOrder = () => {
     const [newItemQuantity, setNewItemQuantity] = useState(1)
     
 
-    const validSizes = ["nv", "nvp", "wv", "wvp", "bt", "btp"]
+    const validSizes = ["nv", "pnv", "wv", "pwv", "bt", "pbt", "bulk"]
   
     const addOrUpdateItem = (itemName, itemSize, itemQuantity=1, itemUM) => {
         setItemList((prevList) => {
@@ -51,6 +51,7 @@ const CurrentPackingOrder = () => {
     const handleClear = () => {
         setItemList([])
         setKeyCounterIIO((prevKey) => prevKey + 1)
+        setBoxType("None")
     }
 
     const handleSubmitNewItem = async (e) => {
@@ -183,7 +184,7 @@ const CurrentPackingOrder = () => {
                                 onChange={(e) => {
                                     setNewItemSize(e.target.value)
                                     setDisabledButton(!validSizes.includes(e.target.value))}}
-                                placeholder="Enter size (Only nv, nvp, wv, wvp, bt, btp)"
+                                placeholder="Enter size (Only nv, pnv, wv, pwv, bt, pbt, bulk)"
                                 className="mt-2 px-3 py-2 border border-gray-300 rounded-md w-full"
                             />
                         </div>
@@ -214,73 +215,74 @@ const CurrentPackingOrder = () => {
 
             <div className="flex space-x-4">
                 {/* Left column */}
-                <div className="w-1/6 p-4 bg-white rounded-md shadow-md flex flex-col space-y-4">
-                    {/* Barcode Input */}
-                    <label className="block text-sm font-medium text-gray-700">Item Barcode</label>
-                    <div className="p-4 bg-gray-50 rounded-md shadow">
-                        <input 
-                            id='barcode-input'
-                            value={barcode}
-                            className="w-full bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border rounded-md px-3 py-2 transition duration-300 ease focus:border-blue-500 hover:border-blue-300" 
-                            placeholder="Type here..." 
-                            type="text"
-                            onChange={handleInputChange}/>
-                    </div>
-                    <div className="p-4 bg-gray-50 rounded-md shadow items-center justify-center">
-                        {/* Box Image */}
-                        <img
-                            src={boxImage}
-                            alt="Cardboard Box"
-                            className="object-cover mb-2"
-                        />
-                        {/* Variable Text */}
-                        <p className="text-center text-lg font-semibold">{boxType}</p>
-                    </div>
+                <div className="w-3/5 rounded-md p-4 shadow-md">
                     {/* Clear Button */}
                     <button
                         onClick={handleClear}
-                        className="px-4 py-2 bg-emerald-300 text-white rounded hover:bg-green-500"
+                        className="block mx-auto w-full h-16 px-4 py-2 bg-emerald-300 text-white rounded hover:bg-green-500"
                     >
                         Clear
                     </button>
-                </div>
-                {/* Middle column */}
-                <div className="flex-1 p-4 bg-white rounded-md shadow-md">
-                    <div className="flex flex-col space-y-2">
-                    <table className="w-full text-left table-auto min-w-max">
-                        <thead>
-                        <tr>
-                            <th className="p-4 border-b border-gray-100 bg-gray-100">
-                            <p className="block font-sans text-sm antialiased font-normal leading-none  opacity-70">
-                                Item Name
-                            </p>
-                            </th>
-                            <th className="p-4 border-b border-gray-100 bg-gray-100">
-                            <p className="block font-sans text-sm antialiased font-normal leading-none opacity-70">
-                                Quantity
-                            </p>
-                            </th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                            {itemList.map((item) => (
-                                <tr
-                                    key={item.id}
-                                    className={`${
-                                                item.id % 2 === 0 ? "bg-gray-50" : ""}`}
-                                >
-                                    <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.item_name}</p></td>
-                                    <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.item_quantity}</p></td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    </div>
-                </div>
-                {/* Right column */}
-                <div className="w-1/3">
+                    {/* Order Table */}
                     <ItemsInOrder key={keyCounterIIO} parentItemList={itemList}/>
                 </div>
+                {/* Right Column */}
+                <div className="w-2/5 p-4 bg-white rounded-md shadow-md flex flex-col space-y-4">
+                    {/* Top Row */}
+                    <div className="flex h-16">
+                        {/* Barcode Input */}
+                        <div className="flex-col w-2/5 text-center">
+                            <label className="block text-sm font-medium text-gray-700">Item Barcode</label>
+                            <div className="">
+                                <input 
+                                    id='barcode-input'
+                                    value={barcode}
+                                    className="w-full bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border rounded-md px-3 py-2 transition duration-300 ease focus:border-blue-500 hover:border-blue-300" 
+                                    placeholder="Type here..." 
+                                    type="text"
+                                    onChange={handleInputChange}/>
+                            </div>
+                        </div>
+                        <div className="flex-col w-3/5 text-center">
+                            {/* Variable Text */}
+                            <label className="block text-sm font-medium text-gray-700">Boxes:</label>
+                            <p className="text-center text-lg font-semibold">{boxType}</p>
+                        </div>
+                    </div>
+                    {/* Bottom Row */}
+                    <div className="flex-grow bg-white rounded-md shadow-md">
+                        <div className="flex flex-col space-y-2">
+                        <table className="w-full text-left table-auto min-w-max">
+                            <thead>
+                            <tr>
+                                <th className="p-4 border-b border-gray-100 bg-gray-100">
+                                <p className="block font-sans text-sm antialiased font-normal leading-none  opacity-70">
+                                    Item Name
+                                </p>
+                                </th>
+                                <th className="p-4 border-b border-gray-100 bg-gray-100">
+                                <p className="block font-sans text-sm antialiased font-normal leading-none opacity-70">
+                                    Quantity
+                                </p>
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                {itemList.map((item) => (
+                                    <tr
+                                        key={item.id}
+                                        className={`${
+                                                    item.id % 2 === 0 ? "bg-gray-50" : ""}`}
+                                    >
+                                        <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.item_name}</p></td>
+                                        <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.item_quantity}</p></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+                </div>                
             </div>
         </div>
     )

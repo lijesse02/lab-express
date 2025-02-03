@@ -16,20 +16,15 @@ def initialize_data(overwrite=False):
     # Order Barcode -> Items
     redis_client.hset("barcode_to_items", "0005000003266", json.dumps(["item1", "1", "item2", "4", "item3", "2", "item4", "2", "item5", "2", "item6", "2"]))
 
-    # Item Barcode -> Item size
+    # Item Barcode -> Item name and size
     # redis_client.hset("item_barcode_info", barcode number, json.dumps({"itemName": "", "itemSize": "",}))
-    redis_client.hset("item_barcode_info", "00000001", json.dumps({"itemName": "first item", "itemSize": "nvp"}))
-    redis_client.hset("item_barcode_info", "item2", "nfp")
-    redis_client.hset("item_barcode_info", "item3", "wf")
-    redis_client.hset("item_barcode_info", "item4", "wfp")
-    redis_client.hset("item_barcode_info", "item5", "bt")
-    redis_client.hset("item_barcode_info", "item6", "btp")
+    redis_client.hset("item_barcode_info", "00000001", json.dumps({"itemName": "first item", "itemSize": "pnv"}))
 
     # UNIQ Collections of Sizes -> UNIQ Collections of Boxes
-    # key=x010203040506 OR
-    # key=x123456
-    redis_client.hset("uniq_to_uniq", "x000000000000", json.dumps(["None"]))
-    redis_client.hset("uniq_to_uniq", "x000000", json.dumps(["None"]))
+    # key=x01020304050607 OR
+    # key=x1234567
+    redis_client.hset("uniq_to_uniq", "x00000000000000", json.dumps(["None"]))
+    redis_client.hset("uniq_to_uniq", "x0000000", json.dumps(["None"]))
 
     # General Item 1 -> General Boxes 1
     redis_client.hset("nf", "01", json.dumps(["11x11x5"]))

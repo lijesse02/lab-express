@@ -70,7 +70,7 @@ def decode_word():
 
         #send back response
         order_info = {
-            "type": "Input = x12",
+            "type": "Input = x14",
             "size_count": input_string,
             "boxes": final_box
         }
@@ -172,11 +172,12 @@ def getItemInfo():
         #Make list of item sizes with given data['items']
         sizeList = {
             "nv": 0,
-            "nvp": 0,
+            "pnv": 0,
             "wv": 0,
-            "wvp": 0,
+            "pwv": 0,
             "bt": 0,
-            "btp": 0,
+            "pbt": 0,
+            "bulk": 0
         }
         for item in data["items"]:
             sizeList[item.get("item_size")] += int(item.get("item_quantity"))
