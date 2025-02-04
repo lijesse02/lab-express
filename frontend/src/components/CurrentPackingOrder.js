@@ -1,28 +1,37 @@
 import React, { useState } from "react";
 import boxImage from '../assets/openBox.png'
+import ItemsInOrder from './ItemsInOrder'
 
 const CurrentPackingOrder = () => {
-    const [boxType, setBoxType] = useState('Small Box'); // Example variable text
-    const [barcode, setBarcode] = useState('')
+    //Displayed Info (item side)
+    const [boxType, setBoxType] = useState('Small Box');
     const [itemList, setItemList] = useState([])
+    const [error, setError] = useState("none")
     const [idCounter, setIdCounter] = useState(1)
+    const [keyCounterIIO, setKeyCounterIIO] = useState(0)
+
+    //Popup for Adding Item
     const [showPopup, setShowPopup] = useState(false)
+    const [disabledButton, setDisabledButton] = useState(true)
+    
+    //Textbox and API variables
+    const [barcode, setBarcode] = useState('')
     const [newItemName, setNewItemName] = useState("")
     const [newItemSize, setNewItemSize] = useState("")
-    const [disabledButton, setDisabledButton] = useState(true)
-    const [error, setError] = useState("none")
+    const [newItemUM, setNewItemUM] = useState("U")
+    const [newItemQuantity, setNewItemQuantity] = useState(1)
+    
 
-
-    const validSizes = ["nv", "nvp", "wv", "wvp", "bt", "btp"]
+    const validSizes = ["nv", "pnv", "wv", "pwv", "bt", "pbt", "bulk"]
   
-    const addOrUpdateItem = (itemName, itemSize, quantity = 1) => {
+    const addOrUpdateItem = (itemName, itemSize, itemQuantity=1, itemUM) => {
         setItemList((prevList) => {
             const existingItem = prevList.find((item) => item.item_name === itemName)
 
             if (existingItem){
                 return prevList.map((item) => 
                     item.item_name === itemName 
-                    ? {...item, quantity:item.quantity + quantity}
+                    ? {...item, item_quantity:item.item_quantity + Number(itemQuantity)}
                     : item
                 )
             }
@@ -31,7 +40,8 @@ const CurrentPackingOrder = () => {
                 id: idCounter,
                 item_name: itemName,
                 item_size: itemSize,
-                quantity
+                item_quantity: Number(itemQuantity),
+                item_um: itemUM
             }
             setIdCounter((prevId) => prevId + 1)
             return [...prevList, newItem]
@@ -40,6 +50,8 @@ const CurrentPackingOrder = () => {
 
     const handleClear = () => {
         setItemList([])
+        setKeyCounterIIO((prevKey) => prevKey + 1)
+        setBoxType("None")
     }
 
     const handleSubmitNewItem = async (e) => {
@@ -50,7 +62,9 @@ const CurrentPackingOrder = () => {
                 body: JSON.stringify({
                     barcode: barcode, 
                     itemName: newItemName,
-                    itemSize: newItemSize
+                    itemSize: newItemSize,
+                    itemUM: newItemUM,
+                    itemQuantity: newItemQuantity
                 })
             })
 
@@ -60,6 +74,8 @@ const CurrentPackingOrder = () => {
                 setNewItemName("")
                 setNewItemSize("")
                 setBarcode("")
+                setNewItemQuantity(1)
+                setNewItemUM("U")
             }
         }catch{
             console.error("bad new item barcode submission", 407)
@@ -83,10 +99,11 @@ const CurrentPackingOrder = () => {
                 if (response.ok) {
                     const data = await response.json()
                     console.log(data.sizeList)
+                    console.log(itemList)
                     if (data.status !== "success!"){
                         setShowPopup(!showPopup)
                     }else{
-                        addOrUpdateItem(data.itemName, data.itemSize, 1)
+                        addOrUpdateItem(data.itemName, data.itemSize, data.itemQuantity, data.itemUM)
                         setBoxType(data.boxes)
                         setBarcode("")
                     }
@@ -131,7 +148,34 @@ const CurrentPackingOrder = () => {
                             />
                         </div>
 
-                        {/* Input for Quantity */}
+                        {/* Input for U/M and Quantity */}
+                        <div className="mb-4">
+                            {/* U/M */}
+                            <label className="block text-sm font-medium text-gray-700">U/M</label>
+                            <input
+                                type="text"
+                                value={newItemUM}
+                                onChange={(e) => {
+                                    setNewItemUM(e.target.value)
+                                   }}
+                                placeholder="Default: U"
+                                className="mt-2 px-3 py-2 border border-gray-300 rounded-md w-full"
+                            />
+
+                            {/* Quantity */}
+                            <label className="block text-sm font-medium text-gray-700">Quantity</label>
+                            <input
+                                type="text"
+                                value={newItemQuantity}
+                                onChange={(e) => {
+                                    setNewItemQuantity(e.target.value)
+                                   }}
+                                placeholder="Default: 1"
+                                className="mt-2 px-3 py-2 border border-gray-300 rounded-md w-full"
+                            />
+                        </div>
+
+                        {/* Input for Size */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700">Size</label>
                             <input
@@ -140,7 +184,7 @@ const CurrentPackingOrder = () => {
                                 onChange={(e) => {
                                     setNewItemSize(e.target.value)
                                     setDisabledButton(!validSizes.includes(e.target.value))}}
-                                placeholder="Enter size (Only nv, nvp, wv, wvp, bt, btp)"
+                                placeholder="Enter size (Only nv, pnv, wv, pwv, bt, pbt, bulk)"
                                 className="mt-2 px-3 py-2 border border-gray-300 rounded-md w-full"
                             />
                         </div>
@@ -171,68 +215,74 @@ const CurrentPackingOrder = () => {
 
             <div className="flex space-x-4">
                 {/* Left column */}
-                <div className="w-1/4 p-4 bg-white rounded-md shadow-md flex flex-col space-y-4">
-                    {/* Barcode Input */}
-                    <div className="p-4 bg-gray-50 rounded-md shadow">
-                        <input 
-                            id='barcode-input'
-                            value={barcode}
-                            className="w-full bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border rounded-md px-3 py-2 transition duration-300 ease focus:border-blue-500 hover:border-blue-300" 
-                            placeholder="Type here..." 
-                            type="text"
-                            onChange={handleInputChange}/>
-                    </div>
-                    <div className="p-4 bg-gray-50 rounded-md shadow items-center justify-center">
-                        {/* Box Image */}
-                        <img
-                            src={boxImage}
-                            alt="Cardboard Box"
-                            className="object-cover mb-2"
-                        />
-                        {/* Variable Text */}
-                        <p className="text-center text-lg font-semibold">{boxType}</p>
-                    </div>
+                <div className="w-3/5 rounded-md p-4 shadow-md">
                     {/* Clear Button */}
                     <button
                         onClick={handleClear}
-                        className="px-4 py-2 bg-emerald-300 text-white rounded hover:bg-green-500"
+                        className="block mx-auto w-full h-16 px-4 py-2 bg-emerald-300 text-white rounded hover:bg-green-500"
                     >
                         Clear
                     </button>
+                    {/* Order Table */}
+                    <ItemsInOrder key={keyCounterIIO} parentItemList={itemList}/>
                 </div>
-                {/* Right column */}
-                <div className="flex-1 p-4 bg-white rounded-md shadow-md">
-                    <div className="flex flex-col space-y-2">
-                    <table class="w-full text-left table-auto min-w-max">
-                        <thead>
-                        <tr>
-                            <th class="p-4 border-b border-gray-100 bg-gray-100">
-                            <p class="block font-sans text-sm antialiased font-normal leading-none  opacity-70">
-                                Item Name
-                            </p>
-                            </th>
-                            <th class="p-4 border-b border-gray-100 bg-gray-100">
-                            <p class="block font-sans text-sm antialiased font-normal leading-none opacity-70">
-                                Quantity
-                            </p>
-                            </th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                            {itemList.map((item) => (
-                                <tr
-                                    key={item.id}
-                                    className={`${
-                                                item.id % 2 === 0 ? "bg-gray-50" : ""}`}
-                                >
-                                    <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.item_name}</p></td>
-                                    <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.quantity}</p></td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                {/* Right Column */}
+                <div className="w-2/5 p-4 bg-white rounded-md shadow-md flex flex-col space-y-4">
+                    {/* Top Row */}
+                    <div className="flex h-16">
+                        {/* Barcode Input */}
+                        <div className="flex-col w-2/5 text-center">
+                            <label className="block text-sm font-medium text-gray-700">Item Barcode</label>
+                            <div className="">
+                                <input 
+                                    id='barcode-input'
+                                    value={barcode}
+                                    className="w-full bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border rounded-md px-3 py-2 transition duration-300 ease focus:border-blue-500 hover:border-blue-300" 
+                                    placeholder="Type here..." 
+                                    type="text"
+                                    onChange={handleInputChange}/>
+                            </div>
+                        </div>
+                        <div className="flex-col w-3/5 text-center">
+                            {/* Variable Text */}
+                            <label className="block text-sm font-medium text-gray-700">Boxes:</label>
+                            <p className="text-center text-lg font-semibold">{boxType}</p>
+                        </div>
                     </div>
-                </div>
+                    {/* Bottom Row */}
+                    <div className="flex-grow bg-white rounded-md shadow-md">
+                        <div className="flex flex-col space-y-2">
+                        <table className="w-full text-left table-auto min-w-max">
+                            <thead>
+                            <tr>
+                                <th className="p-4 border-b border-gray-100 bg-gray-100">
+                                <p className="block font-sans text-sm antialiased font-normal leading-none  opacity-70">
+                                    Item Name
+                                </p>
+                                </th>
+                                <th className="p-4 border-b border-gray-100 bg-gray-100">
+                                <p className="block font-sans text-sm antialiased font-normal leading-none opacity-70">
+                                    Quantity
+                                </p>
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                {itemList.map((item) => (
+                                    <tr
+                                        key={item.id}
+                                        className={`${
+                                                    item.id % 2 === 0 ? "bg-gray-50" : ""}`}
+                                    >
+                                        <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.item_name}</p></td>
+                                        <td className="p-4"><p className="block font-sans text-sm antialiased font-normal leading-normal">{item.item_quantity}</p></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+                </div>                
             </div>
         </div>
     )

@@ -8,9 +8,10 @@ const ExampleDisplay = () => {
         'text-emerald-500',
         'text-blue-700',
         'text-blue-500',
+        'text-black-500',
     ];
     
-    const exampleStrings = ["xabcdef", "xaabbccddeeff"];
+    const exampleStrings = ["xabcdefg", "xaabbccddeeffgg"];
 
     return (
         <div className="mt-8 p-4 bg-gray-100 rounded-lg shadow-lg flex justify-center items-start space-x-6">
@@ -41,7 +42,7 @@ const ExampleDisplay = () => {
             {/* Legend as a Card */}
             <div className="max-w-xs bg-white rounded-md shadow-md border border-gray-300 p-2">
                 <ul className="space-y-1 text-xs text-left">
-                    {['a - narrow', 'b - narrow plugged', 'c - wide', 'd - wide plugged', 'e - bottle tray', 'f - bottle tray plugged'].map((item, index) => (
+                    {['a - narrow', 'b - narrow plugged', 'c - wide', 'd - wide plugged', 'e - bottle tray', 'f - bottle tray plugged', 'g - bulk'].map((item, index) => (
                         <li key={index} className={colors[index % colors.length]}>
                             {item}
                         </li>

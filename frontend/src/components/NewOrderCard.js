@@ -7,7 +7,7 @@ const NewOrderCard = ({ onSubmitOrder }) => {
     const [error, setError] = useState('');
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
-        if (selectedFile && selectedFile.type.startsWith('image/')) {
+        if (selectedFile && selectedFile.name.endsWith('.xlsx')) {
             setFile(selectedFile);
             setError('')
             /*
@@ -17,27 +17,27 @@ const NewOrderCard = ({ onSubmitOrder }) => {
             */
         }else{
             setFile(null)
-            setError('Please select a valid Image')
+            setError('Please select a valid File')
         }
     };
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         if(!file) {
-            setError('Please upload image')
+            setError('Please upload excel file')
             return;
         }
         const formData = new FormData();
-        formData.append('image', file);
+        formData.append('file', file);
 
         try{
-            const response = await fetch('https://www.jesse-li.dev/backend/api/decode', {
+            const response = await fetch('https://www.jesse-li.dev/backend/api/decode-excel', {
                 method: 'POST',
                 body: formData
             });
             const orderData = await response.json();
             if (response.ok) {
-                onSubmitOrder(orderData)
+                console.log(orderData)
             }else{
                 setError(orderData.error || 'Failed to decode barcode')
             }
@@ -75,7 +75,7 @@ const NewOrderCard = ({ onSubmitOrder }) => {
         <div className="max-w-2xl mx-auto mt-6 p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition duration-300">
             <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">New Order</h2>
             <form onSubmit={handleSubmit} className="flex items-center space-x-4 mb-4">
-                <h3 className="text-lg font-semibold text-gray-700">Upload a File</h3>
+                <h3 className="text-lg font-semibold text-gray-700">Upload an Excel File</h3>
                 <input
                     type="file"
                     onChange={handleFileChange}

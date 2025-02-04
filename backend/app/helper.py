@@ -11,6 +11,7 @@ ref["wf"] = 2
 ref["wfp"] = 3
 ref["bt"] = 4
 ref["btp"] = 5
+ref["bulk"] = 6
 
 
 # For a Backwards REFerence mapping between the place in the string and the name of the size (as well as the name of the table in the database)
@@ -21,9 +22,10 @@ bref[2] = "wf"
 bref[3] = "wfp"
 bref[4] = "bt"
 bref[5] = "btp"
+bref[6] = 'bulk'
 
 def toTwelve(s: str):
-    if len(s) == 13: return s
+    if len(s) == 15: return s
     temp = ""
     for char in s:
         temp += char
@@ -60,7 +62,7 @@ def checkIfSingle(s:str):
 # Chops a string into 3 strings. x112233 becomes x110000 x002200 x000033
 # output = list of the 3 strings
 def chopper(s: str):
-    if len(s) > 8:
+    if len(s) > 9:
         ans = ["x" for x in range(3)]
         ans[0] = ans[0] + s[1:5] + "00000000"
         ans[1] = ans[1] + "0000" + s[5:9] + "0000"
