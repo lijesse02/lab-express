@@ -33,7 +33,7 @@ const ItemsInOrder = ({ parentItemList }) => {
         if (value.length === 6){
             
             try{
-                const response = await fetch('http://localhost:5000/api/get-order-info', {
+                const response = await fetch('http://jesse_li.dev/backend/api/get-order-info', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',  // Ensure Content-Type is set to JSON
