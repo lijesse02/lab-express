@@ -157,3 +157,122 @@ def directOutput(s: str):
         for box in temp:
             ans.append(box)
     return ans
+
+
+#turn order into a string. x123456789. Add it to the new_combinations list if it is new. 
+def order_to_string(redis_client, nc, order_num, c):
+    item_sizes = {
+        "nv": 0,
+        "pnv": 0,
+        "wv": 0,
+        "pwv": 0,
+        "bt": 0,
+        "pbt": 0,
+        "sbt": 0,
+        "spbt": 0,
+        "bulk": 0,
+        "error": 0
+    }
+    for item in c:
+        space_index = item[0].find(' ')
+        if space_index != -1:
+            part_num = item[0][:space_index]
+            dash_index = part_num.rfind("-")
+            if dash_index != -1:
+                part_num = part_num[dash_index + 1:]
+                plugged = False
+                if part_num[0] == "P":
+                    plugged = True
+                if "NV" in part_num:
+                    if plugged:
+                        item_sizes["pnv"] += int(item[1])
+                    else:
+                        item_sizes["nv"] += int(item[1])
+                elif "WV" in part_num:
+                    if plugged:
+                        item_sizes["pwv"] += int(item[1])
+                    else:
+                        item_sizes["wv"] += int(item[1])
+                elif "BT" in part_num:
+                    if plugged:
+                        item_sizes["pbt"] += int(item[1]) // 25
+                        item_sizes["spbt"] += int(item[1]) % 25
+                    else:
+                        item_sizes["bt"] += int(item[1]) // 25
+                        item_sizes["sbt"] += int(item[1]) % 25
+                elif "bulk" in item[0] or "BK" in part_num:
+                    item_sizes["bulk"] += 1
+                else:
+                    item_sizes["error"] += 1
+            else:
+                redis_client.hset("error", item[0], "error")
+                item_sizes["error"] += 1
+        else:
+            redis_client.hset("error", item[0], "error")
+            item_sizes["error"] += 1
+    if item_sizes["sbt"] > 25:
+        item_sizes["bt"] += item_sizes["sbt"] // 25
+        item_sizes["sbt"] = item_sizes["sbt"] % 25
+    if item_sizes["spbt"] > 25:
+        item_sizes["pbt"] += item_sizes["spbt"] // 25
+        item_sizes["spbt"] = item_sizes["spbt"] % 25
+    extra_bt = item_sizes["spbt"] + item_sizes["sbt"]
+    if item_sizes["spbt"] > 0:
+        plugged = True
+    else:
+        plugged = False
+    item_sizes["spbt"] = 0
+    item_sizes["sbt"] = 0
+    if extra_bt > 25:
+        if plugged:
+            item_sizes["pbt"] += extra_bt // 25
+            extra_bt = extra_bt % 25
+        else:
+            item_sizes["bt"] += extra_bt // 25
+            extra_bt = extra_bt % 25
+    if extra_bt > 16:
+        if plugged:
+            item_sizes["pbt"] += 1
+        else:
+            item_sizes["bt"] += 1
+    elif extra_bt > 0:
+        if plugged:
+            item_sizes["spbt"] = 1
+        else:
+            item_sizes["sbt"] = 1
+    s = "x"
+    if item_sizes["nv"] < 10:
+        s += "0"
+    s += str(item_sizes["nv"])
+    if item_sizes["pnv"] < 10:
+        s += "0"
+    s += str(item_sizes["pnv"])
+    if item_sizes["wv"] < 10:
+        s += "0"
+    s += str(item_sizes["wv"])
+    if item_sizes["pwv"] < 10:
+        s += "0"
+    s += str(item_sizes["pwv"])
+    if item_sizes["bt"] < 10:
+        s += "0"
+    s += str(item_sizes["bt"])
+    if item_sizes["pbt"] < 10:
+        s += "0"
+    s += str(item_sizes["pbt"])
+    if item_sizes["sbt"] < 10:
+        s += "0"
+    s += str(item_sizes["sbt"])
+    if item_sizes["spbt"] < 10:
+        s += "0"
+    s += str(item_sizes["spbt"])
+    if item_sizes["bulk"] < 10:
+        s += "0"
+    s += str(item_sizes["bulk"])
+    if item_sizes["error"] < 10:
+        s += "0"
+    s += str(item_sizes["error"])
+    if redis_client.hexists("uniq_to_uniq", s):
+        pass
+    else:
+        nc.append([order_num, s])
+    return nc

@@ -85,7 +85,7 @@ const CurrentPackingOrder = () => {
     const handleInputChange = async (e) => {
         const value = e.target.value
         setBarcode(value)
-        if (value.length === 14){
+        if (value.length > 6){
             
             try{
                 const response = await fetch('http://localhost:5000/api/get-item-info', {

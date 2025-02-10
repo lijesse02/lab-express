@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from pyzbar.pyzbar import decode
 from PIL import Image
-from helper import barcodeOutput, toTwelve
+from helper import barcodeOutput, toTwelve, order_to_string
 from logic import logic, logicDict
 import io
 from flask_cors import CORS
@@ -100,6 +100,8 @@ def decode_excel():
     excel_file = request.files['file']
 
     try:
+        #Make the list of all new combinations
+        new_combinations = []
         redis_client.delete("barcode_to_items")
         df = pd.read_excel(excel_file)
         current_order_number = ""
@@ -111,6 +113,7 @@ def decode_excel():
                 if items_in_order:
                     #store order and reset
                     redis_client.hset("barcode_to_items", current_order_number, json.dumps(items_in_order))
+                    new_combinations = order_to_string(redis_client, new_combinations, current_order_number, items_in_order)
                     current_order_number = ""
                     items_in_order = []
             else:
@@ -122,15 +125,26 @@ def decode_excel():
                 elif current_order_number != row.Num[1:-1]:
                     #store if different order number
                     redis_client.hset("barcode_to_items", current_order_number, json.dumps(items_in_order))
+                    new_combinations = order_to_string(redis_client, new_combinations, current_order_number, items_in_order)
                     current_order_number = row.Num[1:-1]
                     items_in_order = [[row.Item, row.Qty]]
                 #check if item is shipping and handling
-                elif "shipping and handling" in row.Item:
+                elif "shipping and handling" in row.Item or "materials and handling" in row.Item or "third-party shipping" in row.Item or "handling fee" in row.Item or "Residential surcharge" in row.Item:
                     continue
                 #another item in the order
                 else:
                     #add item to order
                     items_in_order.append([row.Item, row.Qty])
+
+        #make excel file for database
+        rows_with_blanks = []
+        for row in new_combinations:
+            rows_with_blanks.append([row[0], row[1][1:3], row[1][3:5], row[1][5:7], row[1][7:9], row[1][9:11], row[1][11:13], row[1][13:15], row[1][15:17], row[1][17:19], row[1][19:21]])
+            rows_with_blanks.append([None, None, None, None, None, None, None, None, None, None, None])
+            rows_with_blanks.append([None, None, None, None, None, None, None, None, None, None, None])
+        df = pd.DataFrame(rows_with_blanks, columns = ["Order", "nv", "pnv", "wv", "pwv", "bt", "pbt", "small bt", "small pbt", "bulk", "errors", "", "Box Type", "Items to go in Box"])
+        output_file = '/app/backend/generated_output.xlsx'
+        df.to_excel(output_file, index=False)
         return jsonify({"status": "success! data imported"}), 200
     except Exception as e:
         error_type = type(e).__name__
