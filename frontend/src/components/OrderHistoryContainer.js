@@ -22,7 +22,7 @@ const OrderHistoryContainer = () => {
             </div>
             <NewOrderCard onSubmitOrder={handleNewOrder} />
             <AddConfig />
-            <ExampleDisplay />
+            {/*<ExampleDisplay /> */}
 
         </div>
     );

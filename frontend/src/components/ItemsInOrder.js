@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const ItemsInOrder = ({ parentItemList }) => {
+const ItemsInOrder = ({ parentItemList, updateParentBoxesList }) => {
     const [barcode, setBarcode] = useState("")
     const [showBarcodeInput, setShowBarcodeInput] = useState(true)
     const [orderList, setOrderList] = useState([])
@@ -43,14 +43,17 @@ const ItemsInOrder = ({ parentItemList }) => {
 
                 if (response.ok) {
                     const data = await response.json()
-                    console.log(data.items)
-                    setShowBarcodeInput(false)
+                    /*if (data.status === "Success"){
+                        updateParentBoxesList(data.boxes)
+                    }*/
+                    console.log(data)
                     const items = data.items.map((item) => ({
                         product: item.name,
                         quantity: item.quantity,
                         remaining: item.quantity
                     }))
                     setOrderList(items)
+                    setShowBarcodeInput(false)
                 }else {
                     console.error("API Error:", response.statusText)
                 }

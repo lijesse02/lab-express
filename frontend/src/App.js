@@ -4,6 +4,7 @@ import CurrentPackingOrder from './components/CurrentPackingOrder';
 
 const App = () => {
     const [currentTab, setCurrentTab] = useState("orderLookup")
+    const [index, setIndex] = useState(1)
     return (
             <div className="min-h-screen bg-gray-100 p-4">
             <div className="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
@@ -35,7 +36,7 @@ const App = () => {
             {/* Tab Content */}
             <div className="bg-white p-4 rounded-md shadow-md">
                 {currentTab === 'orderLookup' && <OrderHistoryContainer />}
-                {currentTab === 'currentPackingOrder' && <CurrentPackingOrder />}
+                {currentTab === 'currentPackingOrder' && <CurrentPackingOrder key={index}/>}
             </div>
         </div>
     );

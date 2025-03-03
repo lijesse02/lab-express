@@ -159,8 +159,14 @@ def directOutput(s: str):
     return ans
 
 
+#check if string is in the list[1] of lists (if a string is already in a newCombination list)
+def check_if_string_in_list_of_list(s, nc):
+    exists = any( sublist[1] == s for sublist in nc )
+    return exists
+
+
 #turn order into a string. x123456789. Add it to the new_combinations list if it is new. 
-def order_to_string(redis_client, nc, order_num, c):
+def order_to_string(redis_client, nc, unrecognized_codes, order_num, c):
     item_sizes = {
         "nv": 0,
         "pnv": 0,
@@ -176,6 +182,7 @@ def order_to_string(redis_client, nc, order_num, c):
     for item in c:
         space_index = item[0].find(' ')
         if space_index != -1:
+            item[0] = item[0][:space_index]
             part_num = item[0][:space_index]
             dash_index = part_num.rfind("-")
             if dash_index != -1:
@@ -200,16 +207,41 @@ def order_to_string(redis_client, nc, order_num, c):
                     else:
                         item_sizes["bt"] += int(item[1]) // 25
                         item_sizes["sbt"] += int(item[1]) % 25
-                elif "bulk" in item[0] or "BK" in part_num:
-                    item_sizes["bulk"] += 1
+                elif "bulk" in item[0] or "BK" in part_num or "bulk" in item[0]:
+                    item_sizes["bulk"] += int(item[1])
                 else:
-                    item_sizes["error"] += 1
+                    #if unrecognized, look for the item number in the "error" field of redis
+                    temp_size = redis_client.hget("error", item[0])
+                    if temp_size:
+                        #if found, add it to the correct one
+                        item_sizes[temp_size] += 1
+                    else:
+                        #if not, add it to the unrecognized codes list
+                        item_sizes["error"] += 1
+                        redis_client.hset("error", item[0], "error")
+                        unrecognized_codes.append(item[0])
             else:
-                redis_client.hset("error", item[0], "error")
-                item_sizes["error"] += 1
+                #if unrecognized, look for the item number in the "error" field of redis
+                temp_size = redis_client.hget("error", item[0])
+                if temp_size:
+                    #if found, add it to the correct one
+                    item_sizes[temp_size] += 1
+                else:
+                    #if not, add it to the unrecognized codes list
+                    item_sizes["error"] += 1
+                    redis_client.hset("error", item[0], "error")
+                    unrecognized_codes.append(item[0])
         else:
-            redis_client.hset("error", item[0], "error")
-            item_sizes["error"] += 1
+            #if unrecognized, look for the item number in the "error" field of redis
+            temp_size = redis_client.hget("error", item[0])
+            if temp_size:
+                #if found, add it to the correct one
+                item_sizes[temp_size] += 1
+            else:
+                #if not, add it to the unrecognized codes list
+                item_sizes["error"] += 1
+                redis_client.hset("error", item[0], "error")
+                unrecognized_codes.append(item[0])
     if item_sizes["sbt"] > 25:
         item_sizes["bt"] += item_sizes["sbt"] // 25
         item_sizes["sbt"] = item_sizes["sbt"] % 25
@@ -271,8 +303,12 @@ def order_to_string(redis_client, nc, order_num, c):
     if item_sizes["error"] < 10:
         s += "0"
     s += str(item_sizes["error"])
-    if redis_client.hexists("uniq_to_uniq", s):
+    if item_sizes["error"] > 0:
+        nc.append([order_num, s])
+    elif redis_client.hexists("uniq_to_uniq", s):
+        pass
+    elif check_if_string_in_list_of_list(s, nc):
         pass
     else:
         nc.append([order_num, s])
-    return nc
+    return nc, unrecognized_codes

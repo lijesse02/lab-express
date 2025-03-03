@@ -9,6 +9,8 @@ from init import initialize_data, redis_client
 import os
 import json
 import pandas as pd
+import time
+from datetime import datetime
 
 
 app = Flask(__name__)
@@ -100,8 +102,9 @@ def decode_excel():
     excel_file = request.files['file']
 
     try:
-        #Make the list of all new combinations
+        #Make the list of all new combinations and unrecognized codes
         new_combinations = []
+        unrecognized_codes = []
         redis_client.delete("barcode_to_items")
         df = pd.read_excel(excel_file)
         current_order_number = ""
@@ -113,7 +116,7 @@ def decode_excel():
                 if items_in_order:
                     #store order and reset
                     redis_client.hset("barcode_to_items", current_order_number, json.dumps(items_in_order))
-                    new_combinations = order_to_string(redis_client, new_combinations, current_order_number, items_in_order)
+                    new_combinations, unrecognized_codes = order_to_string(redis_client, new_combinations, unrecognized_codes, current_order_number, items_in_order)
                     current_order_number = ""
                     items_in_order = []
             else:
@@ -125,7 +128,7 @@ def decode_excel():
                 elif current_order_number != row.Num[1:-1]:
                     #store if different order number
                     redis_client.hset("barcode_to_items", current_order_number, json.dumps(items_in_order))
-                    new_combinations = order_to_string(redis_client, new_combinations, current_order_number, items_in_order)
+                    new_combinations, unrecognized_codes = order_to_string(redis_client, new_combinations, unrecognized_codes, current_order_number, items_in_order)
                     current_order_number = row.Num[1:-1]
                     items_in_order = [[row.Item, row.Qty]]
                 #check if item is shipping and handling
@@ -139,13 +142,89 @@ def decode_excel():
         #make excel file for database
         rows_with_blanks = []
         for row in new_combinations:
-            rows_with_blanks.append([row[0], row[1][1:3], row[1][3:5], row[1][5:7], row[1][7:9], row[1][9:11], row[1][11:13], row[1][13:15], row[1][15:17], row[1][17:19], row[1][19:21]])
-            rows_with_blanks.append([None, None, None, None, None, None, None, None, None, None, None])
-            rows_with_blanks.append([None, None, None, None, None, None, None, None, None, None, None])
-        df = pd.DataFrame(rows_with_blanks, columns = ["Order", "nv", "pnv", "wv", "pwv", "bt", "pbt", "small bt", "small pbt", "bulk", "errors", "", "Box Type", "Items to go in Box"])
+            rows_with_blanks.append([row[0], row[1][1:3], row[1][3:5], row[1][5:7], row[1][7:9], row[1][9:11], row[1][11:13], row[1][13:15], row[1][15:17], row[1][17:19], row[1][19:21], None, None, None, None, None])
+            rows_with_blanks.append([None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None])
+            rows_with_blanks.append([None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None])
+        df = pd.DataFrame(rows_with_blanks, columns = ["Order", "nv", "pnv", "wv", "pwv", "bt", "pbt", "smallbt", "smallpbt", "bulk", "errors", "", "Ignore", "Box", "Items", "Notes"])
         output_file = '/app/backend/generated_output.xlsx'
-        df.to_excel(output_file, index=False)
+
+        #make excel file for unrecognized codes
+        rows_for_unrecognized_codes = []
+        for row in unrecognized_codes:
+            rows_for_unrecognized_codes.append([row])
+        errors_df = pd.DataFrame(rows_for_unrecognized_codes, columns = ["unrecognized codes"])
+        with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
+            df.to_excel(writer, sheet_name="Main Data", index=False)
+            errors_df.to_excel(writer, sheet_name="Unrecognized Codes", index=False)
         return jsonify({"status": "success! data imported"}), 200
+    except Exception as e:
+        error_type = type(e).__name__
+        error_message = str(e)
+        return jsonify({
+            "status": "failed",
+            "error_type": error_type,
+            "error_message": error_message,
+            "columns": df.columns
+        }), 500
+    return jsonify({"status": "success! data imported"})
+
+@app.route('/api/input-excel', methods=['POST'])
+def input_excel():
+    if 'file' not in request.files:
+        return jsonify({"error": "No Excel File Provided"}), 400
+    
+    excel_file = request.files['file']
+
+    try:
+        df = pd.read_excel(excel_file)
+        current_order = {
+            "item_sizes": "",
+            "boxes": []
+        } #item_sizes and boxes. Boxes will be a list of objects of box type and items. Its ok if items is empty
+        for row in df.itertuples(index=True):
+            #check if Order is not empty
+            if not pd.isna(row.Order):
+                #if it is filled in, log the previous object if string is filled in. Log the string, as well as the boxes, and empty the current order
+                if current_order.get("item_sizes", "") is not None:
+                    redis_client.hset("uniq_to_uniq", current_order.get("item_sizes", ""), json.dumps(current_order.get("boxes")))
+                current_order["boxes"] = []
+                current_order["item_sizes"] = ""
+                #check if ignore is empty
+                if pd.isna(row.Ignore):
+                    #If ignore is empty, Then build up the new string
+                    s = "x"
+                    sizes = ["nv", "pnv", "wv", "pwv", "bt", "pbt", "smallbt", "smallpbt", "bulk"]
+                    for size in sizes:
+                        temp = row._asdict().get(size, 69)
+                        temp = int(temp)
+                        if temp < 10:
+                            s = s + "0"
+                        s = s + str(temp)
+                    s = s + "00"
+                    current_order["item_sizes"] = s
+                else:
+                    #If ignore is filled in, continue
+                    continue
+            #add the box type and items in box of this row into the current_order["boxes"] list
+            if pd.isna(row.Box):
+                continue
+            elif pd.isna(row.Items):
+                box = {
+                        "box": row.Box,
+                        "items": ""
+                    }
+                current_order["boxes"].append(box)
+            else:
+                box = {
+                    "box": row.Box,
+                    "items": row.Items
+                }
+                current_order["boxes"].append(box)
+        if current_order.get("item_sizes"):
+            redis_client.hset("uniq_to_uniq", current_order.get("item_sizes", ""), json.dumps(current_order.get("boxes", [])))
+        return jsonify({
+            "status": "Success! Data Logged"
+        }), 200
     except Exception as e:
         error_type = type(e).__name__
         error_message = str(e)
@@ -154,19 +233,116 @@ def decode_excel():
             "error_type": error_type,
             "error_message": error_message
         }), 500
-    return jsonify({"status": "success! data imported"})
+
 
 @app.route('/api/get-order-info', methods=['POST'])
 def getOrderInfo():
     #grab data from request
     data = request.get_json()
+    error_part = ""
+    statuses = [
+        "placeholder",
+        "failure. No order",
+        "Error in order",
+        "Error in finding boxes",
+        "Success"
+    ]
+    current_status = statuses[4]
+    item_sizes = {
+        "nv": 0,
+        "pnv": 0,
+        "wv": 0,
+        "pwv": 0,
+        "bt": 0,
+        "pbt": 0,
+        "sbt": 0,
+        "spbt": 0,
+        "bulk": 0,
+        "error": 0
+    }
     items = redis_client.hget('barcode_to_items', data["barcode"])
     if items:
         items = json.loads(items)
         itemList = []
         for item in items:
+            space_index = item[0].find(" ")
+            part_num = item[0][:space_index]
+            dash_index = part_num.find('-')
+            part_num = part_num[dash_index + 1:]
+            plugged = False
+            if part_num[0] == "P":
+                plugged = True
+            if "NV" in part_num:
+                if plugged:
+                    item_sizes["pnv"] += int(item[1])
+                else:
+                    item_sizes["nv"] += int(item[1])
+            elif "WV" in part_num:
+                if plugged:
+                    item_sizes["pwv"] += int(item[1])
+                else:
+                    item_sizes["wv"] += int(item[1])
+            elif "BT" in part_num:
+                if plugged:
+                    item_sizes["pbt"] += int(item[1]) // 25
+                    item_sizes["spbt"] += int(item[1]) % 25
+                else:
+                    item_sizes["bt"] += int(item[1]) // 25
+                    item_sizes["sbt"] += int(item[1]) % 25
+            elif "bulk" in item[0] or "BK" in part_num:
+                item_sizes["bulk"] += int(item[1])
+            elif redis_client.hexists("error", item[0][:space_index]):
+                temp_size = redis_client.hget("error", item[0][:space_index])
+                if temp_size != "error":
+                    if temp_size == "bt":
+                        item_sizes["bt"] += int(item[1]) // 25
+                        item_sizes["sbt"] += int(item[1]) % 25
+                    elif temp_size == "pbt":
+                        item_sizes["pbt"] += int(item[1]) // 25
+                        item_sizes["spbt"] += int(item[1]) % 25 
+                    else:
+                        item_sizes[temp_size] += int(item[1])
+                else:
+                    error_part = item[0][:space_index]
+                    current_status = statuses[2]
             itemList.append({"name": item[0], "quantity": item[1]})
-        return jsonify({"status": "success", "items": itemList})
+        s = "x"
+        if item_sizes["nv"] < 10:
+            s += "0"
+        s += str(item_sizes["nv"])
+        if item_sizes["pnv"] < 10:
+            s += "0"
+        s += str(item_sizes["pnv"])
+        if item_sizes["wv"] < 10:
+            s += "0"
+        s += str(item_sizes["wv"])
+        if item_sizes["pwv"] < 10:
+            s += "0"
+        s += str(item_sizes["pwv"])
+        if item_sizes["bt"] < 10:
+            s += "0"
+        s += str(item_sizes["bt"])
+        if item_sizes["pbt"] < 10:
+            s += "0"
+        s += str(item_sizes["pbt"])
+        if item_sizes["sbt"] < 10:
+            s += "0"
+        s += str(item_sizes["sbt"])
+        if item_sizes["spbt"] < 10:
+            s += "0"
+        s += str(item_sizes["spbt"])
+        if item_sizes["bulk"] < 10:
+            s += "0"
+        s += str(item_sizes["bulk"])
+        if item_sizes["error"] < 10:
+            s += "0"
+        s += str(item_sizes["error"])
+        boxes = redis_client.hget("uniq_to_uniq", s)
+        if boxes:
+            boxes = json.loads(boxes)
+        elif current_status == statuses[4]:
+            current_status = statuses[3]
+        return jsonify({"status": current_status, "items": itemList, "error_part": error_part, "boxes": boxes})
     return jsonify({'status': "failure. No items in order"})
 
 
@@ -207,7 +383,7 @@ def getItemInfo():
                         "itemUM": itemUM,
                         "itemQuantity": itemQuantity,
                         "sizeList": sizeList,
-                        "boxes": boxes
+                        #"boxes": boxes
                         })
     else:
         return jsonify({"status": "No item",
@@ -239,6 +415,18 @@ def addConfig():
     #input into database
     redis_client.hset("uniq_to_uniq", size_count, json.dumps(boxes))
     return jsonify({"status": "Success!"})
+
+
+@app.route('/api/log', methods=['POST'])
+def log():
+    data = request.get_json()
+    log = data["log"]
+    timestamp_key = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
+
+    # Store log in Redis
+    redis_client.hset("log", timestamp_key, log)
+
+    return jsonify({"success": True, "timestamp": timestamp_key})
 
 
 if __name__ == "__main__":
