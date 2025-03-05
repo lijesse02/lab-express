@@ -146,7 +146,7 @@ def decode_excel():
             rows_with_blanks.append([None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None])
             rows_with_blanks.append([None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None])
         df = pd.DataFrame(rows_with_blanks, columns = ["Order", "nv", "pnv", "wv", "pwv", "bt", "pbt", "smallbt", "smallpbt", "bulk", "errors", "", "Ignore", "Box", "Items", "Notes"])
-        output_file = '/app/backend/generated_output.xlsx'
+        output_file = './generated_output.xlsx'
 
         #make excel file for unrecognized codes
         rows_for_unrecognized_codes = []
@@ -164,7 +164,6 @@ def decode_excel():
             "status": "failed",
             "error_type": error_type,
             "error_message": error_message,
-            "columns": df.columns
         }), 500
     return jsonify({"status": "success! data imported"})
 
@@ -347,6 +346,8 @@ def getOrderInfo():
 
 
 @app.route('/api/get-item-info', methods=['POST'])
+#Requires: barcode
+#Returns: item name and quantity
 def getItemInfo():
     # grab data
     data = request.get_json()
@@ -359,31 +360,12 @@ def getItemInfo():
         itemUM = itemData["itemUM"]
         itemQuantity = int(itemData["itemQuantity"])
 
-        #Make list of item sizes with given data['items']
-        sizeList = {
-            "nv": 0,
-            "pnv": 0,
-            "wv": 0,
-            "pwv": 0,
-            "bt": 0,
-            "pbt": 0,
-            "bulk": 0
-        }
-        for item in data["items"]:
-            sizeList[item.get("item_size")] += int(item.get("item_quantity"))
-        sizeList[itemData["itemSize"]] += int(itemData["itemQuantity"])
-
-        #return the box(es) to use as a string
-        boxes = logicDict(sizeList)
-
         return jsonify({
                         "status": "success!",
                         "itemName": itemName,
                         "itemSize": itemSize,
                         "itemUM": itemUM,
-                        "itemQuantity": itemQuantity,
-                        "sizeList": sizeList,
-                        #"boxes": boxes
+                        "itemQuantity": itemQuantity
                         })
     else:
         return jsonify({"status": "No item",
@@ -420,7 +402,7 @@ def addConfig():
 @app.route('/api/log', methods=['POST'])
 def log():
     data = request.get_json()
-    log = data["log"]
+    log = data["message"]
     timestamp_key = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
 
     # Store log in Redis

@@ -4,7 +4,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     volumes:
-      - ./backend:/app/backend
+      - ./backend:/app
+    working_dir: /app
     ports:
       - "5000:5000"
     environment:
@@ -22,7 +23,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     volumes:
-      - ./src:/app/src
+      - ./frontend:/app
+    working_dir: /app
     ports:
       - "3000:80"
     environment:
