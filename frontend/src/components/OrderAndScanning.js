@@ -23,6 +23,8 @@ const OrderAndScanning = () => {
     const handleClear = () => {
         setScannedItems([])
         setBoxes([])
+        setOrder([])
+        setOrderBarcode("")
     }
 
     const handleLog = async (e) => {
@@ -142,6 +144,13 @@ const OrderAndScanning = () => {
                     >
                         <h2 className="text-lg font-semibold">{box.size}</h2>
                         <p className="text-gray-600">Contains: {box.items}</p>
+                        <input
+                                type="text"
+                                value={box.weight}
+                                onChange={(e) => box.weight = e.target.value}
+                                placeholder="Enter weight"
+                                className="mt-2 px-3 py-2 border border-gray-300 rounded-md w-full"
+                            />
                     </div>
                 ))}
             </div>

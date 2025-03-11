@@ -32,7 +32,8 @@ const Order = ( { order, updateOrder, updateBoxes, updateOrderBarcode } ) => {
                     }))
                     const boxes = data.boxes.map((box) => ({
                         size: box.box,
-                        items: box.items
+                        items: box.items,
+                        weight: 0
                     }))
                     updateOrder(items)
                     updateBoxes(boxes)
