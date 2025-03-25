@@ -14,6 +14,8 @@ from datetime import datetime
 
 
 app = Flask(__name__)
+app.config["DEBUG"] = True
+app.config["PROPAGATE_EXCEPTIONS"] = True
 
 CORS(app)
 
@@ -107,30 +109,85 @@ def decode_excel():
         unrecognized_codes = []
         redis_client.delete("barcode_to_items")
         df = pd.read_excel(excel_file)
+        df["Date"] = df["Date"].astype(str)
+        columns = df.columns.to_list()
         current_order_number = ""
+        whole_order = {
+            "items": [],
+            "name": "",
+            "shipMethod": "",
+            "shipDate": "",
+            "address1": "",
+            "address2": "",
+            "city": "",
+            "state": "",
+            "zip": "",
+        }
         items_in_order = []
         for row in df.itertuples(index=True):
-            #check if the row is an order item
+            #check if the row is NOT an order item
             if pd.isna(row.Num):
                 #check if the order has been stored yet
                 if items_in_order:
                     #store order and reset
-                    redis_client.hset("barcode_to_items", current_order_number, json.dumps(items_in_order))
+                    whole_order["items"] = items_in_order
+                    redis_client.hset("barcode_to_items", current_order_number, json.dumps(whole_order))
                     new_combinations, unrecognized_codes = order_to_string(redis_client, new_combinations, unrecognized_codes, current_order_number, items_in_order)
                     current_order_number = ""
                     items_in_order = []
             else:
                 #check if row is a new order
                 if current_order_number == "":
+                    whole_order = {
+                    "items": [],
+                    "name": "",
+                    "shipMethod": "",
+                    "shipDate": "",
+                    "address1": "",
+                    "address2": "",
+                    "city": "",
+                    "state": "",
+                    "zip": "",
+                }
                     current_order_number = row.Num[1:-1]
                     items_in_order = [[row.Item, row.Qty]]
+                    whole_order["name"] = row.Name
+                    whole_order["shipMethod"] = row.Via
+                    whole_order["shipDate"] = row.Date
+                    whole_order["address1"] = row._26
+                    whole_order["address2"] = row._28
+                    whole_order["city"] = row._30
+                    whole_order["state"] = row._32
+                    whole_order["zip"] = row._34
                 #check if order number is a different order number
                 elif current_order_number != row.Num[1:-1]:
+                    
                     #store if different order number
-                    redis_client.hset("barcode_to_items", current_order_number, json.dumps(items_in_order))
+                    whole_order["items"] = items_in_order
+                    redis_client.hset("barcode_to_items", current_order_number, json.dumps(whole_order))
                     new_combinations, unrecognized_codes = order_to_string(redis_client, new_combinations, unrecognized_codes, current_order_number, items_in_order)
                     current_order_number = row.Num[1:-1]
                     items_in_order = [[row.Item, row.Qty]]
+
+                    whole_order = {
+                    "items": [],
+                    "name": "",
+                    "shipMethod": "",
+                    "shipDate": "",
+                    "address1": "",
+                    "address2": "",
+                    "city": "",
+                    "state": "",
+                    "zip": "",
+                }
+                    whole_order["name"] = row.Name
+                    whole_order["shipMethod"] = row.Via
+                    whole_order["shipDate"] = row.Date
+                    whole_order["address1"] = row._26
+                    whole_order["address2"] = row._28
+                    whole_order["city"] = row._30
+                    whole_order["state"] = row._32
+                    whole_order["zip"] = row._34
                 #check if item is shipping and handling
                 elif "shipping and handling" in row.Item or "materials and handling" in row.Item or "third-party shipping" in row.Item or "handling fee" in row.Item or "Residential surcharge" in row.Item:
                     continue
@@ -156,7 +213,8 @@ def decode_excel():
         with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
             df.to_excel(writer, sheet_name="Main Data", index=False)
             errors_df.to_excel(writer, sheet_name="Unrecognized Codes", index=False)
-        return jsonify({"status": "success! data imported"}), 200
+        return jsonify({"status": "success! data imported",
+                        "columns": columns}), 200
     except Exception as e:
         error_type = type(e).__name__
         error_message = str(e)
@@ -259,10 +317,11 @@ def getOrderInfo():
         "bulk": 0,
         "error": 0
     }
-    items = redis_client.hget('barcode_to_items', data["barcode"])
-    if items:
-        items = json.loads(items)
+    order = redis_client.hget('barcode_to_items', data["barcode"])
+    if order:
+        order = json.loads(order)
         itemList = []
+        items = order["items"]
         for item in items:
             space_index = item[0].find(" ")
             part_num = item[0][:space_index]
@@ -305,6 +364,36 @@ def getOrderInfo():
                     error_part = item[0][:space_index]
                     current_status = statuses[2]
             itemList.append({"name": item[0], "quantity": item[1]})
+        if item_sizes["sbt"] > 25:
+            item_sizes["bt"] += item_sizes["sbt"] // 25
+            item_sizes["sbt"] = item_sizes["sbt"] % 25
+        if item_sizes["spbt"] > 25:
+            item_sizes["pbt"] += item_sizes["spbt"] // 25
+            item_sizes["spbt"] = item_sizes["spbt"] % 25
+        extra_bt = item_sizes["spbt"] + item_sizes["sbt"]
+        if item_sizes["spbt"] > 0:
+            plugged = True
+        else:
+            plugged = False
+        item_sizes["spbt"] = 0
+        item_sizes["sbt"] = 0
+        if extra_bt > 25:
+            if plugged:
+                item_sizes["pbt"] += extra_bt // 25
+                extra_bt = extra_bt % 25
+            else:
+                item_sizes["bt"] += extra_bt // 25
+                extra_bt = extra_bt % 25
+        if extra_bt > 16:
+            if plugged:
+                item_sizes["pbt"] += 1
+            else:
+                item_sizes["bt"] += 1
+        elif extra_bt > 0:
+            if plugged:
+                item_sizes["spbt"] = 1
+            else:
+                item_sizes["sbt"] = 1
         s = "x"
         if item_sizes["nv"] < 10:
             s += "0"
@@ -341,7 +430,7 @@ def getOrderInfo():
             boxes = json.loads(boxes)
         elif current_status == statuses[4]:
             current_status = statuses[3]
-        return jsonify({"status": current_status, "items": itemList, "error_part": error_part, "boxes": boxes})
+        return jsonify({"status": current_status, "items": itemList, "error_part": error_part, "boxes": boxes, "order": order, "item_sizes": item_sizes})
     return jsonify({'status': "failure. No items in order"})
 
 

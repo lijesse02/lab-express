@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-const Order = ( { order, updateOrder, updateBoxes, updateOrderBarcode } ) => {
+const Order = ( { order, updateOrder, updateBoxes, updateOrderBarcode, updateClient } ) => {
 
     const [orderBarcode, setOrderBarcode] = useState("")
 
@@ -37,6 +37,7 @@ const Order = ( { order, updateOrder, updateBoxes, updateOrderBarcode } ) => {
                     }))
                     updateOrder(items)
                     updateBoxes(boxes)
+                    updateClient(data.order)
                     updateOrderBarcode(orderBarcode)
                     setOrderBarcode("")
                 }else {

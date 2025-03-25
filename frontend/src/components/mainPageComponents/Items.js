@@ -5,6 +5,7 @@ const Items = ( { order, items, updateItems} ) => {
     const [itemBarcode, setItemBarcode] = useState("")
     const [showPopup, setShowPopup] = useState(false)
     const [error, setError] = useState("none")
+    const [deletingMode, setDeletingMode] = useState(false)
 
     const [newItemName, setNewItemName] = useState("")
     const [newItemSize, setNewItemSize] = useState("")
@@ -36,7 +37,12 @@ const Items = ( { order, items, updateItems} ) => {
                     if (data.status !== "success!"){
                         setShowPopup(!showPopup)
                     }else{
-                        updateItems(data.itemName, data.itemSize, data.itemQuantity, data.itemUM)
+                        if(deletingMode){
+                            updateItems(data.itemName, data.itemSize,0 - data.itemQuantity, data.itemUM)
+                        }
+                        else{
+                            updateItems(data.itemName, data.itemSize, data.itemQuantity, data.itemUM)
+                        }
                         setItemBarcode("")
                     }
                 }else {
@@ -79,19 +85,31 @@ const Items = ( { order, items, updateItems} ) => {
 
 
     return (
-        <div>
-            <div className="h-1/4">
-                <label className="block text-sm font-medium text-gray-700">Item Barcode</label>
-                <input
-                    id="order-barcode"
-                    type="text"
-                    value={itemBarcode}
-                    onChange={(e) => setItemBarcode(e.target.value)}
-                    onKeyDown={handleItemSubmit}
-                    placeholder="Enter Order Barcode"
-                    className="mt-2 px-3 py-2 border border-gray-300 rounded-md w-full"
+        <div className={ ` ${
+            deletingMode ? "bg-red-200 w-full" : "bg-gray-100 w-full"
+        }`}>
+            <div className="h-1/4 flex">
+                <div className="w-2/3">
+                    <label className="block text-sm font-medium text-gray-700">Item Barcode</label>
+                    <input
+                        id="order-barcode"
+                        type="text"
+                        value={itemBarcode}
+                        onChange={(e) => setItemBarcode(e.target.value)}
+                        onKeyDown={handleItemSubmit}
+                        placeholder="Enter Order Barcode"
+                        className="mt-2 px-3 py-2 border border-gray-300 rounded-md w-full"
 
-                />
+                    />
+                </div>
+                <div className="w-1/3">
+                    <button
+                            onClick={() => setDeletingMode(!deletingMode)}
+                            className="block m-2 w-auto px-4 py-2 bg-red-300 text-white rounded hover:bg-red-500"
+                    >
+                        Delete
+                    </button>
+                </div>
             </div>
 
             {showPopup && (

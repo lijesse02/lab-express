@@ -40,7 +40,7 @@ const NewOrderCard = ({ onSubmitOrder }) => {
                 console.log(orderData)
             }else{
                 setError(orderData.error || 'Failed to decode barcode')
-                console.log(data)
+                console.log(orderData)
             }
         }catch (err){
             setError('Error connecting to backend')

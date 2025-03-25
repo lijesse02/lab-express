@@ -304,7 +304,7 @@ def order_to_string(redis_client, nc, unrecognized_codes, order_num, c):
         s += "0"
     s += str(item_sizes["error"])
     if item_sizes["error"] > 0:
-        nc.append([order_num, s])
+        nc.insert(0,[order_num, s])
     elif redis_client.hexists("uniq_to_uniq", s):
         pass
     elif check_if_string_in_list_of_list(s, nc):
