@@ -50,7 +50,7 @@ const OrderAndScanning = () => {
 
     const handleLog = async (e) => {
         try{
-            const response = await fetch("http://localhost:5000/api/log", {
+            const response = await fetch("https://www.jesse-li.dev/backend/api/log", {
                 method: "POST",
                 headers: { "Content-Type": "application/json"},
                 body: JSON.stringify({

@@ -14,8 +14,6 @@ from datetime import datetime
 
 
 app = Flask(__name__)
-app.config["DEBUG"] = True
-app.config["PROPAGATE_EXCEPTIONS"] = True
 
 CORS(app)
 
@@ -264,8 +262,15 @@ def decode_excel():
         }), 500
     return jsonify({"status": "success! data imported"})
 
-@app.route('/api/input-excel', methods=['POST'])
+@app.route('/api/input-excel', methods=['POST', 'OPTIONS'])
 def input_excel():
+    if request.method == 'OPTIONS':
+        # Respond to the preflight request
+        response = Flask.make_response('')
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return response
     if 'file' not in request.files:
         return jsonify({"error": "No Excel File Provided"}), 400
     
@@ -344,8 +349,15 @@ def input_excel():
         }), 500
 
 
-@app.route('/api/get-order-info', methods=['POST'])
+@app.route('/api/get-order-info', methods=['POST', 'OPTIONS'])
 def getOrderInfo():
+    if request.method == 'OPTIONS':
+        # Respond to the preflight request
+        response = Flask.make_response('')
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return response
     #grab data from request
     data = request.get_json()
     error_part = ""
@@ -562,8 +574,15 @@ def addConfig():
     return jsonify({"status": "Success!"})
 
 
-@app.route('/api/log', methods=['POST'])
+@app.route('/api/log', methods=['POST', 'OPTIONS'])
 def log():
+    if request.method == 'OPTIONS':
+        # Respond to the preflight request
+        response = Flask.make_response('')
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return response
     data = request.get_json()
     log = data["message"]
     timestamp_key = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]

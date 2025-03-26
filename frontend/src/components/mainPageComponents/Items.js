@@ -20,7 +20,7 @@ const Items = ( { order, items, updateItems} ) => {
     const handleItemSubmit = async (event) => {
         if (event.key === "Enter"){
             try{
-                const response = await fetch('http://localhost:5000/api/get-item-info', {
+                const response = await fetch('https://www.jesse-li.dev/backend/api/get-item-info', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',  // Ensure Content-Type is set to JSON
@@ -56,7 +56,7 @@ const Items = ( { order, items, updateItems} ) => {
 
     const handleSubmitNewItem = async (e) => {
         try{
-            const response = await fetch("http://localhost:5000/api/new-item-barcode", {
+            const response = await fetch("https://www.jesse-li.dev/backend/api/new-item-barcode", {
                 method: "POST",
                 headers: { "Content-Type": "application/json"},
                 body: JSON.stringify({
