@@ -27,6 +27,8 @@ def initialize_data(overwrite=False):
     redis_client.hset("uniq_to_uniq", "x00000000000000", json.dumps(["None"]))
     redis_client.hset("uniq_to_uniq", "x0000000", json.dumps(["None"]))
 
+
+    """
     # General Item 1 -> General Boxes 1
     redis_client.hset("nf", "01", json.dumps(["11x11x5"]))
     redis_client.hset("nf", "02", json.dumps(["11x11x8"]))
@@ -89,5 +91,4 @@ def initialize_data(overwrite=False):
     redis_client.hset("btp", "07", json.dumps([""]))
     redis_client.hset("btp", "08", json.dumps(["wv-10 box"]))
 
-
-
+"""

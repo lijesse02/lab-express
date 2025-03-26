@@ -4,11 +4,13 @@ import ItemsInOrder from './ItemsInOrder'
 
 const CurrentPackingOrder = () => {
     //Displayed Info (item side)
-    const [boxType, setBoxType] = useState('Small Box');
+    const [boxType, setBoxType] = useState([]);
     const [itemList, setItemList] = useState([])
     const [error, setError] = useState("none")
     const [idCounter, setIdCounter] = useState(1)
     const [keyCounterIIO, setKeyCounterIIO] = useState(0)
+    const [logData, setLogData] = useState("")
+
 
     //Popup for Adding Item
     const [showPopup, setShowPopup] = useState(false)
@@ -54,6 +56,17 @@ const CurrentPackingOrder = () => {
         setBoxType("None")
     }
 
+    const updateBoxType = (newData) => {
+        setBoxType(newData)
+    }
+
+    const handleKeyDown = (e) => {
+        if (e.key === "Enter") {
+          onScan(barcode); // Send barcode to backend
+          setBarcode(""); // Reset input field
+        }
+      };
+
     const handleSubmitNewItem = async (e) => {
         try{
             const response = await fetch("https://www.jesse-li.dev/backend/api/new-item-barcode", {
@@ -85,7 +98,7 @@ const CurrentPackingOrder = () => {
     const handleInputChange = async (e) => {
         const value = e.target.value
         setBarcode(value)
-        if (value.length === 6){
+        if (value.length > 6){
             
             try{
                 const response = await fetch('https://www.jesse-li.dev/backend/api/get-item-info', {
@@ -217,14 +230,22 @@ const CurrentPackingOrder = () => {
                 {/* Left column */}
                 <div className="w-3/5 rounded-md p-4 shadow-md">
                     {/* Clear Button */}
-                    <button
-                        onClick={handleClear}
-                        className="block mx-auto w-full h-16 px-4 py-2 bg-emerald-300 text-white rounded hover:bg-green-500"
-                    >
-                        Clear
-                    </button>
+                    <div className="flex">
+                            <button
+                            onClick={handleClear}
+                            className="block mx-auto w-1/2 h-16 px-4 py-2 bg-red-300 text-white rounded hover:bg-red-500"
+                        >
+                            Clear
+                        </button>
+                        <button
+                            onClick={handleClear}
+                            className="block mx-auto w-1/2 h-16 px-4 py-2 bg-emerald-300 text-white rounded hover:bg-green-500"
+                        >
+                            Log
+                        </button>
+                    </div>
                     {/* Order Table */}
-                    <ItemsInOrder key={keyCounterIIO} parentItemList={itemList}/>
+                    <ItemsInOrder key={keyCounterIIO} parentItemList={itemList} updateParentBoxesList={updateBoxType}/>
                 </div>
                 {/* Right Column */}
                 <div className="w-2/5 p-4 bg-white rounded-md shadow-md flex flex-col space-y-4">
@@ -240,7 +261,8 @@ const CurrentPackingOrder = () => {
                                     className="w-full bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border rounded-md px-3 py-2 transition duration-300 ease focus:border-blue-500 hover:border-blue-300" 
                                     placeholder="Type here..." 
                                     type="text"
-                                    onChange={handleInputChange}/>
+                                    onChange={handleInputChange}
+                                    />
                             </div>
                         </div>
                         <div className="flex-col w-3/5 text-center">
@@ -283,6 +305,9 @@ const CurrentPackingOrder = () => {
                         </div>
                     </div>
                 </div>                
+            </div>
+            <div>
+                {/* Bottom Row for Displaying boxes */}
             </div>
         </div>
     )

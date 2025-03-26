@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import '../tailwind.css'
 
 const NewOrderCard = ({ onSubmitOrder }) => {
-    const [numberInput, setNumberInput] = useState('');
-    const [file, setFile] = useState(null);
+    const [inputFile, setInputFile] = useState(null);
+    const [ordersFile, setOrdersFile] = useState(null);
     const [error, setError] = useState('');
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
         if (selectedFile && selectedFile.name.endsWith('.xlsx')) {
-            setFile(selectedFile);
+            setOrdersFile(selectedFile);
             setError('')
             /*
             *** useEffect(() => {
@@ -16,19 +16,19 @@ const NewOrderCard = ({ onSubmitOrder }) => {
             *** }, [])
             */
         }else{
-            setFile(null)
+            setOrdersFile(null)
             setError('Please select a valid File')
         }
     };
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        if(!file) {
+        if(!ordersFile) {
             setError('Please upload excel file')
             return;
         }
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('file', ordersFile);
 
         try{
             const response = await fetch('https://www.jesse-li.dev/backend/api/decode-excel', {
@@ -40,42 +40,54 @@ const NewOrderCard = ({ onSubmitOrder }) => {
                 console.log(orderData)
             }else{
                 setError(orderData.error || 'Failed to decode barcode')
+                console.log(orderData)
             }
         }catch (err){
             setError('Error connecting to backend')
         }
     };
 
-    const handleInputChange = (e) => setNumberInput(e.target.value);
+    const handleInputChange = (e) => {
+        const selectedInputFile = e.target.files[0];
+        if (selectedInputFile && selectedInputFile.name.endsWith(".xlsx")){
+            setInputFile(selectedInputFile);
+            setError("")
+        }else{
+            setInputFile(null)
+            setError("Please select a valid input file")
+        }
+    };
     const handleInputSubmit = async (e) => {
         e.preventDefault();
-        const data = { input_string: numberInput };
+        if(!inputFile) {
+            setError('Please upload excel file')
+            return;
+        }
+        const inputFormData = new FormData();
+        inputFormData.append('file', inputFile);
 
         try{
-            const response = await fetch('https://www.jesse-li.dev/backend/api/decode-word', {
+            const response = await fetch('https://www.jesse-li.dev/backend/api/input-excel', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',  // Ensure Content-Type is set to JSON
-                },
-                body: JSON.stringify(data)
+                body: inputFormData
             });
-            const orderData = await response.json();
+            const inputResponse = await response.json();
             if (response.ok) {
-                onSubmitOrder(orderData)
+                console.log(inputResponse)
             }else{
-                setError(orderData.error || 'Faulty code')
+                setError(inputResponse.error || 'Failed to decode barcode')
+                console.log(inputResponse)
             }
         }catch (err){
             setError('Error connecting to backend')
         }
-        setNumberInput('');
     };
 
     return (
         <div className="max-w-2xl mx-auto mt-6 p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition duration-300">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">New Order</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">New Order Sheet</h2>
             <form onSubmit={handleSubmit} className="flex items-center space-x-4 mb-4">
-                <h3 className="text-lg font-semibold text-gray-700">Upload an Excel File</h3>
+                <h3 className="text-lg font-semibold text-gray-700">Upload an Excel File From QuickBooks</h3>
                 <input
                     type="file"
                     onChange={handleFileChange}
@@ -90,12 +102,10 @@ const NewOrderCard = ({ onSubmitOrder }) => {
             </form>
 
             <form onSubmit={handleInputSubmit} className="flex items-center space-x-4">
-                <h3 className="text-lg font-semibold text-gray-700">Enter a String</h3>
+                <h3 className="text-lg font-semibold text-gray-700">Submit a completed Excel File with Input</h3>
                 <input
-                    type="text"
-                    value={numberInput}
+                    type="file"
                     onChange={handleInputChange}
-                    placeholder="Enter a string"
                     className="w-48 px-2 py-1 border border-gray-300 rounded-md text-sm"
                 />
                 <button

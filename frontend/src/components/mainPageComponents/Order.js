@@ -1,44 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
-const ItemsInOrder = ({ parentItemList, updateParentBoxesList }) => {
-    const [barcode, setBarcode] = useState("")
-    const [showBarcodeInput, setShowBarcodeInput] = useState(true)
-    const [orderList, setOrderList] = useState([])
+const Order = ( { order, updateOrder, updateBoxes, updateOrderBarcode, updateClient } ) => {
 
-    useEffect(() => {
-        setOrderList((prevList) => {
-            const updatedList = [...prevList]
+    const [orderBarcode, setOrderBarcode] = useState("")
 
-            parentItemList.forEach((parentItem) => {
-                const existingItem = updatedList.find((item) => item.product.startsWith(parentItem.item_name))
+    useEffect(() => {}, [order])
 
-                if(existingItem){
-                    existingItem.remaining = existingItem.quantity - parentItem.item_quantity
-                }else{
-                    updatedList.push({
-                        product: parentItem.item_name,
-                        quantity: 0,
-                        remaining: 0 - Number(parentItem.item_quantity)
-                    })
-                }
-            })
+    console.log("Child rendering with:", order)
 
-            return updatedList
-        })
-    }, [parentItemList])
-
-    const handleInputChange = async (e) => {
-        const value = e.target.value
-        setBarcode(value)
-        if (value.length === 6){
-            
+    const handleOrderSubmit = async (event) => {
+        if (event.key === "Enter"){
             try{
-                const response = await fetch('https://jesse-li.dev/backend/api/get-order-info', {
+                const response = await fetch('http://localhost:5000/api/get-order-info', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',  // Ensure Content-Type is set to JSON
                     },
-                    body: JSON.stringify({ barcode: value })
+                    body: JSON.stringify({ barcode: orderBarcode })
                 })
 
                 if (response.ok) {
@@ -52,8 +30,16 @@ const ItemsInOrder = ({ parentItemList, updateParentBoxesList }) => {
                         quantity: item.quantity,
                         remaining: item.quantity
                     }))
-                    setOrderList(items)
-                    setShowBarcodeInput(false)
+                    const boxes = data.boxes.map((box) => ({
+                        size: box.box,
+                        items: box.items,
+                        weight: 0
+                    }))
+                    updateOrder(items)
+                    updateBoxes(boxes)
+                    updateClient(data.order)
+                    updateOrderBarcode(orderBarcode)
+                    setOrderBarcode("")
                 }else {
                     console.error("API Error:", response.statusText)
                 }
@@ -66,20 +52,23 @@ const ItemsInOrder = ({ parentItemList, updateParentBoxesList }) => {
 
     return (
         <div>
-            {showBarcodeInput && (
+            {order.length === 0 ? (
                 <div>
                     <label className="block text-sm font-medium text-gray-700">Order Barcode</label>
                     <input
                         id="order-barcode"
                         type="text"
-                        value={barcode}
-                        onChange={handleInputChange}
-                        placeholder="Enter Barcode"
+                        value={orderBarcode}
+                        onChange={(e) => setOrderBarcode(e.target.value)}
+                        onKeyDown={handleOrderSubmit}
+                        placeholder="Enter Order Barcode"
                         className="mt-2 px-3 py-2 border border-gray-300 rounded-md w-full"
+
                     />
                 </div>
-            )}
-            {!showBarcodeInput && (
+            
+            ) : (
+            <div>
                 <div className="p-4 bg-white rounded-md shadow-md flex flex-col">
                     <table className="w-auto text-left table-auto">
                         <thead>
@@ -102,7 +91,7 @@ const ItemsInOrder = ({ parentItemList, updateParentBoxesList }) => {
                         </tr>
                         </thead>
                         <tbody>
-                            {orderList.map((item) => (
+                            {order.map((item) => (
                                 <tr
                                     key={item.product}
                                     className={`border border-gray-300 p-2 ${
@@ -121,8 +110,9 @@ const ItemsInOrder = ({ parentItemList, updateParentBoxesList }) => {
                         </tbody>
                     </table>
                 </div>
-            )}
+            </div>) }
         </div>
-    )
+    ) 
 }
-export default ItemsInOrder;
+
+export default Order;
