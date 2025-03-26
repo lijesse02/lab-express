@@ -99,6 +99,12 @@ const NewOrderCard = ({ onSubmitOrder }) => {
                 >
                     Upload
                 </button>
+                <button
+                    onClick={() => window.open('https://www.jesse-li.dev/backend/api/return-excel', '_blank')}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                    Download Excel
+                </button>
             </form>
 
             <form onSubmit={handleInputSubmit} className="flex items-center space-x-4">

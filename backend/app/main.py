@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from pyzbar.pyzbar import decode
 from PIL import Image
 from helper import barcodeOutput, toTwelve, order_to_string
@@ -261,6 +261,22 @@ def decode_excel():
             "error_message": error_message,
         }), 500
     return jsonify({"status": "success! data imported"})
+
+@app.route('/api/return-excel', methods=['GET', 'OPTIONS'])
+def return_excel():
+    if request.method == 'OPTIONS':
+         # Respond to the preflight request
+        response = Flask.make_response('')
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return response
+    file_path = "/app/generated_output.xlsx"
+    if not os.path.exists(file_path):
+        return "File not found", 404
+    
+    return send_file(file_path, as_attachment=True)
+
 
 @app.route('/api/input-excel', methods=['POST', 'OPTIONS'])
 def input_excel():
