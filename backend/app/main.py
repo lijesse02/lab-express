@@ -97,6 +97,7 @@ def decode_word():
 
 @app.route('/api/decode-excel', methods=['POST'])
 def decode_excel():
+    #Takes order sheet from quickbooks
     #receive data
     if 'file' not in request.files:
         return jsonify({"error": "No Excel File Provided"}), 400
@@ -106,6 +107,7 @@ def decode_excel():
     try:
         #Make the list of all new combinations and unrecognized codes
         new_combinations = []
+        new_combinations_one_rate = []
         unrecognized_codes = []
         redis_client.delete("barcode_to_items")
         df = pd.read_excel(excel_file)
@@ -122,6 +124,7 @@ def decode_excel():
             "city": "",
             "state": "",
             "zip": "",
+            "oneRate": False
         }
         items_in_order = []
         for row in df.itertuples(index=True):
@@ -131,8 +134,11 @@ def decode_excel():
                 if items_in_order:
                     #store order and reset
                     whole_order["items"] = items_in_order
+                    if whole_order["oneRate"]:
+                        new_combinations_one_rate, unrecognized_codes = order_to_string(redis_client, new_combinations_one_rate, unrecognized_codes, current_order_number, items_in_order, True)
+                    else:
+                        new_combinations, unrecognized_codes = order_to_string(redis_client, new_combinations, unrecognized_codes, current_order_number, items_in_order)
                     redis_client.hset("barcode_to_items", current_order_number, json.dumps(whole_order))
-                    new_combinations, unrecognized_codes = order_to_string(redis_client, new_combinations, unrecognized_codes, current_order_number, items_in_order)
                     current_order_number = ""
                     items_in_order = []
             else:
@@ -148,11 +154,14 @@ def decode_excel():
                     "city": "",
                     "state": "",
                     "zip": "",
+                    "oneRate": False
                 }
                     current_order_number = row.Num[1:-1]
                     items_in_order = [[row.Item, row.Qty]]
                     whole_order["name"] = row.Name
                     whole_order["shipMethod"] = row.Via
+                    if "one rate" in row.Via:
+                        whole_order["oneRate"] = True
                     whole_order["shipDate"] = row.Date
                     whole_order["address1"] = row._26
                     whole_order["address2"] = row._28
@@ -160,12 +169,14 @@ def decode_excel():
                     whole_order["state"] = row._32
                     whole_order["zip"] = row._34
                 #check if order number is a different order number
-                elif current_order_number != row.Num[1:-1]:
-                    
+                elif current_order_number != row.Num[1:-1]:                    
                     #store if different order number
                     whole_order["items"] = items_in_order
+                    if whole_order["oneRate"]:
+                        new_combinations_one_rate, unrecognized_codes = order_to_string(redis_client, new_combinations_one_rate, unrecognized_codes, current_order_number, items_in_order, True)
+                    else:
+                        new_combinations, unrecognized_codes = order_to_string(redis_client, new_combinations, unrecognized_codes, current_order_number, items_in_order)
                     redis_client.hset("barcode_to_items", current_order_number, json.dumps(whole_order))
-                    new_combinations, unrecognized_codes = order_to_string(redis_client, new_combinations, unrecognized_codes, current_order_number, items_in_order)
                     current_order_number = row.Num[1:-1]
                     items_in_order = [[row.Item, row.Qty]]
 
@@ -179,9 +190,12 @@ def decode_excel():
                     "city": "",
                     "state": "",
                     "zip": "",
+                    "oneRate": False
                 }
                     whole_order["name"] = row.Name
                     whole_order["shipMethod"] = row.Via
+                    if "one rate" in row.Via:
+                        whole_order["oneRate"] = True
                     whole_order["shipDate"] = row.Date
                     whole_order["address1"] = row._26
                     whole_order["address2"] = row._28
@@ -189,7 +203,7 @@ def decode_excel():
                     whole_order["state"] = row._32
                     whole_order["zip"] = row._34
                 #check if item is shipping and handling
-                elif "shipping and handling" in row.Item or "materials and handling" in row.Item or "third-party shipping" in row.Item or "handling fee" in row.Item or "Residential surcharge" in row.Item:
+                elif "shipping and handling" in row.Item or "materials and handling" in row.Item or "third-party shipping" in row.Item or "handling fee" in row.Item or "Residential surcharge" in row.Item or "surcharge" in row.Item:
                     continue
                 #another item in the order
                 else:
@@ -199,10 +213,14 @@ def decode_excel():
         #make excel file for database
         rows_with_blanks = []
         for row in new_combinations:
-            rows_with_blanks.append([row[0], row[1][1:3], row[1][3:5], row[1][5:7], row[1][7:9], row[1][9:11], row[1][11:13], row[1][13:15], row[1][15:17], row[1][17:19], row[1][19:21], None, None, None, None, None])
-            rows_with_blanks.append([None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None])
-            rows_with_blanks.append([None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None])
-        df = pd.DataFrame(rows_with_blanks, columns = ["Order", "nv", "pnv", "wv", "pwv", "bt", "pbt", "smallbt", "smallpbt", "bulk", "errors", "", "Ignore", "Box", "Items", "Notes"])
+            rows_with_blanks.append([row[0], row[1][1:3], row[1][3:5], row[1][5:7], row[1][7:9], row[1][9:11], row[1][11:13], row[1][13:15], row[1][15:17], row[1][17:19], row[1][19:21], None, None, None, None, None, None])
+            rows_with_blanks.append([None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None])
+            rows_with_blanks.append([None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None])
+        for row in new_combinations_one_rate:
+            rows_with_blanks.append([row[0], row[1][1:3], row[1][3:5], row[1][5:7], row[1][7:9], row[1][9:11], row[1][11:13], row[1][13:15], row[1][15:17], row[1][17:19], row[1][19:21], "x", None, None, None, None, None])
+            rows_with_blanks.append([None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None])
+            rows_with_blanks.append([None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None])
+        df = pd.DataFrame(rows_with_blanks, columns = ["Order", "nv", "pnv", "wv", "pwv", "bt", "pbt", "smallbt", "smallpbt", "bulk", "errors","OneRate", "", "Ignore", "Box", "Items", "Notes"])
         output_file = './generated_output.xlsx'
 
         #make excel file for unrecognized codes
@@ -236,16 +254,21 @@ def input_excel():
         df = pd.read_excel(excel_file)
         current_order = {
             "item_sizes": "",
-            "boxes": []
+            "boxes": [],
+            "one_rate": False
         } #item_sizes and boxes. Boxes will be a list of objects of box type and items. Its ok if items is empty
         for row in df.itertuples(index=True):
             #check if Order is not empty
             if not pd.isna(row.Order):
                 #if it is filled in, log the previous object if string is filled in. Log the string, as well as the boxes, and empty the current order
                 if current_order.get("item_sizes", "") is not None:
-                    redis_client.hset("uniq_to_uniq", current_order.get("item_sizes", ""), json.dumps(current_order.get("boxes")))
+                    if current_order["one_rate"]:
+                        redis_client.hset("uniq_to_uniq_one_rate", current_order.get("item_sizes", ""), json.dumps(current_order.get("boxes")))
+                    else:
+                        redis_client.hset("uniq_to_uniq", current_order.get("item_sizes", ""), json.dumps(current_order.get("boxes")))
                 current_order["boxes"] = []
                 current_order["item_sizes"] = ""
+                current_order["one_rate"] = False
                 #check if ignore is empty
                 if pd.isna(row.Ignore):
                     #If ignore is empty, Then build up the new string
@@ -259,6 +282,10 @@ def input_excel():
                         s = s + str(temp)
                     s = s + "00"
                     current_order["item_sizes"] = s
+                    if pd.isna(row.OneRate):
+                        current_order["one_rate"] = False
+                    else:
+                        current_order["one_rate"] = True
                 else:
                     #If ignore is filled in, continue
                     continue
@@ -277,8 +304,12 @@ def input_excel():
                     "items": row.Items
                 }
                 current_order["boxes"].append(box)
+        #loop done, last log into redis
         if current_order.get("item_sizes"):
-            redis_client.hset("uniq_to_uniq", current_order.get("item_sizes", ""), json.dumps(current_order.get("boxes", [])))
+            if current_order["one_rate"]:
+                redis_client.hset("uniq_to_uniq_one_rate", current_order.get("item_sizes", ""), json.dumps(current_order.get("boxes", [])))
+            else:
+                redis_client.hset("uniq_to_uniq", current_order.get("item_sizes", ""), json.dumps(current_order.get("boxes", [])))
         return jsonify({
             "status": "Success! Data Logged"
         }), 200

@@ -166,7 +166,7 @@ def check_if_string_in_list_of_list(s, nc):
 
 
 #turn order into a string. x123456789. Add it to the new_combinations list if it is new. 
-def order_to_string(redis_client, nc, unrecognized_codes, order_num, c):
+def order_to_string(redis_client, nc, unrecognized_codes, order_num, c, one_rate=False):
     item_sizes = {
         "nv": 0,
         "pnv": 0,
@@ -305,7 +305,9 @@ def order_to_string(redis_client, nc, unrecognized_codes, order_num, c):
     s += str(item_sizes["error"])
     if item_sizes["error"] > 0:
         nc.insert(0,[order_num, s])
-    elif redis_client.hexists("uniq_to_uniq", s):
+    elif not one_rate and redis_client.hexists("uniq_to_uniq", s):
+        pass
+    elif one_rate and redis_client.hexists("uniq_to_uniq_one_rate", s):
         pass
     elif check_if_string_in_list_of_list(s, nc):
         pass
