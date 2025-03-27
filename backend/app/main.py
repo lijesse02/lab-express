@@ -404,7 +404,10 @@ def getOrderInfo():
         items = order["items"]
         for item in items:
             space_index = item[0].find(" ")
-            part_num = item[0][:space_index]
+            if space_index != -1:
+                part_num = item[0][:space_index]
+            else:
+                part_num = item[0]
             dash_index = part_num.find('-')
             part_num = part_num[dash_index + 1:]
             plugged = False
@@ -510,7 +513,7 @@ def getOrderInfo():
             boxes = json.loads(boxes)
         elif current_status == statuses[4]:
             current_status = statuses[3]
-        return jsonify({"status": current_status, "items": itemList, "error_part": error_part, "boxes": boxes, "order": order, "item_sizes": item_sizes})
+        return jsonify({"status": current_status, "items": itemList, "error_part": error_part, "boxes": boxes, "order": order, "item_sizes": item_sizes, "part_num": part_num})
     return jsonify({'status': "failure. No items in order"})
 
 
@@ -605,6 +608,9 @@ def log():
 
     # Store log in Redis
     redis_client.hset("log", timestamp_key, log)
+
+    # Tell bridge app to store this order
+    redis_client.hset("bridge_app", data["barcode"], json.dumps({"barcode": data["barcode"], "boxes": data["boxes"]}))
 
     return jsonify({"success": True, "timestamp": timestamp_key})
 

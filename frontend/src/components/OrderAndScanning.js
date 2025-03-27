@@ -54,7 +54,9 @@ const OrderAndScanning = () => {
                 method: "POST",
                 headers: { "Content-Type": "application/json"},
                 body: JSON.stringify({
-                    message: "Order " + orderBarcode + " Completed"
+                    message: "Order " + orderBarcode + " Completed",
+                    boxes: boxes,
+                    barcode: orderBarcode
                 })
             })
 
@@ -126,6 +128,12 @@ const OrderAndScanning = () => {
         })
     }, [scannedItems])
 
+    const handleWeightChange = (index, newWeight) => {
+        const updatedBoxes = [...boxes];
+        updatedBoxes[index].weight = newWeight;
+        setBoxes(updatedBoxes);
+      };
+
     const handleBoxesUpdate = (newBoxes) => {
         setBoxes(newBoxes)
     }
@@ -181,9 +189,9 @@ const OrderAndScanning = () => {
                     <p><strong>Zip Code:</strong> {clientInfo.zip}</p>
                 </div>
                 <div className="items-center justify-center">
-                    {boxes.map((box) => (
+                    {boxes.map((box, index) => (
                         <div
-                            key={box.id}
+                            key={index}
                             className="border-2 border-red-400 p-8 mx-6 rounded-lg my-auto shadow-lg"
                         >
                             <h2 className="text-lg font-semibold">{box.size}</h2>
@@ -191,7 +199,7 @@ const OrderAndScanning = () => {
                             <input
                                     type="text"
                                     value={box.weight}
-                                    onChange={(e) => box.weight = e.target.value}
+                                    onChange={(e) => handleWeightChange(index, e.target.value)}
                                     placeholder="Enter weight"
                                     className="mt-2 px-3 py-2 border border-gray-300 rounded-md w-full"
                                 />
