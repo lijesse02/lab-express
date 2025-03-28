@@ -622,7 +622,7 @@ def log():
         "address2": order_data["address2"],
         "city": order_data["city"],
         "state": order_data["state"],
-        "zip": order_data["state"],
+        "zip": order_data["zip"],
         "PO": order_data.get("PO", 0)
         }))
 
