@@ -532,7 +532,21 @@ def log():
     redis_client.hset("log", timestamp_key, log)
 
     # Tell bridge app to store this order
-    redis_client.hset("bridge_app", data["barcode"], json.dumps({"barcode": data["barcode"], "boxes": data["boxes"]}))
+    order_data = redis_client.hget("barcode_to_items", data["barcode"])
+    order_data = json.loads(order_data)
+    redis_client.hset("bridge_app", data["barcode"], json.dumps({
+        "barcode": data["barcode"],
+        "boxes": data["boxes"],
+        "name": order_data["name"],
+        "shipMethod": order_data["shipMethod"],
+        "data": order_data["shipDate"],
+        "address1": order_data["address1"],
+        "address2": order_data["address2"],
+        "city": order_data["city"],
+        "state": order_data["state"],
+        "zip": order_data["state"],
+        "PO": order_data.get("PO", 0)
+        }))
 
     return jsonify({"success": True, "timestamp": timestamp_key})
 
